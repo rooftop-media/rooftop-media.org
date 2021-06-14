@@ -30,10 +30,9 @@ var server = http.createServer(
 	}
 	/*  It's a single page app -- when it requests html, it uses .html.      */
 	else if (extname == ".html") {
-	    var file = fs.readFileSync( __dirname + "/pages" + url );
-	    res.writeHead(200, {'Content-Type': 'text/html'});
-	    res.write(file);
-	    res.end();
+	    fs.readFile( __dirname + "/pages" + url, function(error, content) {
+
+	    });
 	}
 	/*  We also might be pinged for a .png, or something. Handle that here.  */
 	else {

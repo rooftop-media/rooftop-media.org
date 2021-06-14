@@ -2,26 +2,155 @@
 
   <head>
     <title>&#10070; &#x2756;  Rooftop Media</title>
+    <style>
+
+      /*  Page set up.   */
+      html, body {
+        width: 100%;
+        height: 100%;
+        font-family: sans-serif;
+      }
+
+      #centered-column {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+
+      /*  Header stuff.   */
+      #header {
+        text-align:    center;
+        padding-top:   100px;
+        margin-bottom: 50px;
+      }
+      #logo {
+        max-width: 200px;
+      }
+      .arrow-button {
+        color: #57B4C8;
+        cursor: pointer;
+      }
+      .hidden {
+        opacity: 0;
+        cursor: none;
+      }
+      #menu-option-picker {
+        display:         flex;
+        justify-content: space-around;
+        align-items:     center;
+        height:          100px;
+        border-bottom:   solid black 2px;
+      }
+
+      #menu-options {
+        display: flex;
+      }
+      #menu-options div {
+        color: #9047B8;
+        width: 100px;
+        cursor: pointer;
+      }
+      #menu-options div:hover {
+        text-decoration: underline;
+      }
+      #menu-options div.selected {
+        text-decoration: underline;
+        font-weight: bold;
+      }
+    </style>
+
+    <script>
+      // Memory
+      var menu_position = 0;
+      var current_page  = window.location.pathname;
+      var pages = ['/', '/kw', '/hardware', '/storefront', '/distribution', '/about-us'];
+
+      //  Moving left or right in the link display. 
+      function move_menu(amt) {
+        menu_position += amt;
+        if (menu_position < 0) {
+	        menu_position++;
+	      }
+        if (menu_position > 2) {
+	        menu_position--;
+	      }
+        draw_menu();
+      }
+      //  Drawing 4 links at a time. 
+      function draw_menu() {
+        for (var i = 0; i < 6; i++) {
+          var link_id = "menu-link-" + (i+1).toString();
+	        if (i >= menu_position && i < menu_position + 4) {
+	          document.getElementById(link_id).style.display = "block";
+	        } else {
+	          document.getElementById(link_id).style.display = "none";	
+	        }
+          if (pages[i] == current_page) {
+            document.getElementById(link_id).classList.add("selected");	
+          } else {
+            document.getElementById(link_id).classList.remove("selected");
+          }
+	      }
+        //  This part handles the back/fwd arrows.
+	      if (menu_position < 2) {
+	        document.getElementById("go-forward").classList.remove("hidden");	
+	      } else {
+	        document.getElementById("go-forward").classList.add("hidden");	
+	      }
+	      if (menu_position > 0) {
+	        document.getElementById("go-back").classList.remove("hidden");	
+	      } else {
+	        document.getElementById("go-back").classList.add("hidden");	
+	      }
+	    }
+      //  Navigate to a different page.
+      function goto(page) {
+        window.history.pushState({page: ""}, "Rooftop Media", page);
+        const http = new XMLHttpRequest();
+        if (pages.indexOf(page) == -1) {
+          page = "/home";
+        }
+        console.log("requesting: " + page + ".html")
+        http.open("GET", page + ".html");
+        http.send();
+
+        http.onreadystatechange = (e) => {
+          // console.log(http.responseText)
+          document.getElementById('page-content').innerHTML = http.responseText;
+        }
+      }
+      //  Boot the page.
+      function boot() {
+        draw_menu();
+        goto(current_page);
+      }
+    </script>
+
   </head>
 
-  <body>
-    <div id="header">
-      <img src="/logo.png" alt="Rooftop Media's logo!">
-      <div id="menu-option-picker">
-	<span onclick="move_menu(-1)">&#9756; &#x261C; More </span>
-	<div class="menu-options">
-	  <span onclick="goto('/')">Home page</span>
-	  <span onclick="goto('/kw')">kw</span>
-	  <span onclick="goto('/hardware')">Hardware</span>
-	  <span onclick="goto('/storefront')">Storefront</span>
-	  <span onclick="goto('/distribution')">Distribution</span>
-	  <span onclick="goto('/about-us')">About Us</span>
-	</div>
-	<span onclick="move_menu(1)"> More &#9758;</span>
+  <body onload="boot()">
+    <div id="centered-column">
+
+      <div id="header">
+	      <img id="logo" src="/assets/logo.png" alt="Rooftop Media's logo!">
+	      <div id="menu-option-picker">
+	      <div id="go-back" onclick="move_menu(-1)" class="arrow-button">&#9756; More </div>
+	      <div id="menu-options">
+	        <div id="menu-link-1" onclick="goto('/home')">Home page</div>
+	        <div id="menu-link-2" onclick="goto('/kw')">kw</div>
+	        <div id="menu-link-3" onclick="goto('/hardware')">Hardware</div>
+	        <div id="menu-link-4" onclick="goto('/storefront')">Storefront</div>
+	        <div id="menu-link-5" onclick="goto('/distribution')">Distribution</div>
+	        <div id="menu-link-6" onclick="goto('/about-us')">About Us</div>
+	      </div>
+	      <div id="go-forward" onclick="move_menu(1)" class="arrow-button"> More &#9758;</div>
+	    </div>
       </div>
-    </div>
-    <div id="page-content">
-      <!--  Insert page content here!  -->
+
+      <div id="page-content">
+	      <!--  Insert page content here!  -->
+      </div>
+
     </div>
   </body>
 
