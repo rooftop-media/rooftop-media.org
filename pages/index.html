@@ -63,7 +63,7 @@
       // Memory
       var menu_position = 0;
       var current_page  = window.location.pathname;
-      var pages = ['/', '/kw', '/hardware', '/storefront', '/distribution', '/about-us'];
+      var pages = ['/home', '/kw', '/hardware', '/storefront', '/distribution', '/about-us'];
 
       //  Moving left or right in the link display. 
       function move_menu(amt) {
@@ -105,18 +105,19 @@
 	    }
       //  Navigate to a different page.
       function goto(page) {
-        window.history.pushState({page: ""}, "Rooftop Media", page);
+        window.history.pushState({page: "/"}, "Rooftop Media", page);
         const http = new XMLHttpRequest();
         if (pages.indexOf(page) == -1) {
           page = "/home";
         }
-        console.log("requesting: " + page + ".html")
+        console.log("Making an http req for: " + page + ".html")
         http.open("GET", page + ".html");
         http.send();
-
         http.onreadystatechange = (e) => {
-          // console.log(http.responseText)
+          console.log("Response recieved! Updating page content.")
           document.getElementById('page-content').innerHTML = http.responseText;
+          current_page = page;
+          draw_menu();
         }
       }
       //  Boot the page.
