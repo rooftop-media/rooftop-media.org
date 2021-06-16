@@ -1,7 +1,11 @@
 <html>
 
   <head>
-    <title>&#10070; &#x2756;  Rooftop Media</title>
+    <title>&#x2756;  Rooftop Media &#x2756;</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicons/favicon-16x16.png">
+    <link rel="manifest" href="/favicons/site.webmanifest">
     <style>
 
       /*  Page set up.   */
@@ -80,7 +84,7 @@
       }
       #page-content div {
         margin-bottom: 15px;
-        font-size: 20px;
+        font-size: 16px;
         line-height: 150%;
       }
     </style>
@@ -89,7 +93,7 @@
       // Memory
       var menu_position = 0;
       var current_page  = window.location.pathname;
-      var pages = ['/home', '/kw', '/hardware', '/storefront', '/distribution', '/about-us'];
+      var pages = ['/home', '/software', '/hardware', '/storefront', '/distribution', '/about-us'];
 
       //  Moving left or right in the link display. 
       function move_menu(amt) {
@@ -164,7 +168,7 @@
 	      <div id="go-back" onclick="move_menu(-1)" class="arrow-button">&#9756; More </div>
 	      <div id="menu-options">
 	        <div id="menu-link-1" onclick="goto('/home')">Home page</div>
-	        <div id="menu-link-2" onclick="goto('/kw')">kw</div>
+	        <div id="menu-link-2" onclick="goto('/software')">Software</div>
 	        <div id="menu-link-3" onclick="goto('/hardware')">Hardware</div>
 	        <div id="menu-link-4" onclick="goto('/storefront')">Storefront</div>
 	        <div id="menu-link-5" onclick="goto('/distribution')">Distribution</div>
