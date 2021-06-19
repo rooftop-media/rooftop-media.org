@@ -53,7 +53,7 @@
       }
       #menu-options div {
         color: #9047B8;
-        width: 100px;
+        width: 120px;
         cursor: pointer;
       }
       #menu-options div:hover {
@@ -83,6 +83,9 @@
       .flex-box {
         display: flex;
       }
+      .space-between {
+        justify-content: space-between;
+      }
       #page-content div {
         margin-bottom: 15px;
         font-size: 16px;
@@ -94,7 +97,7 @@
       // Memory
       var menu_position = 0;
       var current_page  = window.location.pathname;
-      var pages = ['/home', '/software', '/hardware', '/storefront', '/distribution', '/about-us'];
+      var pages = ['/home', '/website-plans', '/software', '/hardware', '/storefront', '/about-us'];
 
       //  Moving left or right in the link display. 
       function move_menu(amt) {
@@ -169,10 +172,10 @@
 	      <div id="go-back" onclick="move_menu(-1)" class="arrow-button">&#9756; More </div>
 	      <div id="menu-options">
 	        <div id="menu-link-1" onclick="goto('/home')">Home page</div>
-	        <div id="menu-link-2" onclick="goto('/software')">Software</div>
-	        <div id="menu-link-3" onclick="goto('/hardware')">Hardware</div>
-	        <div id="menu-link-4" onclick="goto('/storefront')">Storefront</div>
-	        <div id="menu-link-5" onclick="goto('/distribution')">Distribution</div>
+          <div id="menu-link-2" onclick="goto('/website-plans')">Website Plans</div>
+	        <div id="menu-link-3" onclick="goto('/software')">Software</div>
+	        <div id="menu-link-4" onclick="goto('/hardware')">Hardware</div>
+	        <div id="menu-link-5" onclick="goto('/storefront')">Storefront</div>
 	        <div id="menu-link-6" onclick="goto('/about-us')">About Us</div>
 	      </div>
 	      <div id="go-forward" onclick="move_menu(1)" class="arrow-button"> More &#9758;</div>
