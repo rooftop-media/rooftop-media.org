@@ -5,12 +5,16 @@
       display: flex;
       justify-content: space-between;
     }
+    #error {
+      color: red;
+    }
   </style>
   <h3>Register:</h3>
-  <p>Username: <input value="benholland" /></p>
-  <p>Email: <input value="bhollan5@kent.edu" /></p>
-  <p>Phone: <input value="3307038105" /></p>
-  <p>Password: <input type="password" /></p>
-  <p>Confirm Password: <input type="password" /></p>
-  <button>Register</button>
+  <p>Username: <input value="benholland" id="username" /></p>
+  <p>Email: <input value="bhollan5@kent.edu" id="email" /></p>
+  <p>Phone: <input value="3307038105" id="phone" /></p>
+  <p>Password: <input type="password" id="password" /></p>
+  <p>Confirm Password: <input type="password" id="password_confirm" /></p>
+  <p id="error"></p>
+  <button onclick="register()">Register</button>
 </div>

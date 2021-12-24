@@ -19,5 +19,6 @@
   "homepage": "https://github.com/rooftop-media/rooftop-media.org#readme",
   "devDependencies": {
     "typescript": "^4.5.3"
-  }
+  },
+  "dependencies": {}
 }

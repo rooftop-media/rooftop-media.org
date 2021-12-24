@@ -14,8 +14,12 @@ function server_request(req, res) {
 	console.log("New request: " + url);
 	var extname = String(path.extname(url)).toLowerCase();
 	
+	/*  Routes that start with 'api' are handled by the api_routes function, below.  */
+	if (extname.length == 0 && url.split('/')[1] == 'api') {
+		api_routes(url, res);
+	
 	/*  Routes with no extension get index.html, the SPA frame.   */
-	if (extname.length == 0) {
+	} else if (extname.length == 0) {
 	
 			res.writeHead(200, {'Content-Type': 'text/html'});
 			var main_page = fs.readFileSync(__dirname + '/../pages/index.html');
@@ -43,9 +47,9 @@ function server_request(req, res) {
 		fs.readFile( __dirname + '/..' + url, function(error, content) {
 			if (error) {
 					if(error.code == 'ENOENT') {
-				fs.readFile('./404.html', function(error, content) {
-					res.writeHead(404, { 'Content-Type': 'text/html' });
-					res.end(content, 'utf-8');
+						fs.readFile('./404.html', function(error, content) {
+							res.writeHead(404, { 'Content-Type': 'text/html' });
+							res.end(content, 'utf-8');
 						});
 					}
 					else {
@@ -88,3 +92,24 @@ var mimeTypes = {
     '.otf': 'application/font-otf',
     '.wasm': 'application/wasm'
 };
+
+
+//  This function fires when an /api/ route is requested. 
+function api_routes(api_route, res) {
+	console.log(`api route: ${api_route}`);
+
+	if (api_route == "/api/get-tables") {
+		let table_files = fs.readdirSync(__dirname + '/database/table_headers')
+		var all_tables = [];
+		for (let i = 0; i < table_files.length; i++) {
+			let table_file = table_files[i];
+			console.log(table_file)
+			let table_data = fs.readFileSync(__dirname + '/database/table_headers/' + table_file, 'utf8')
+			console.log(JSON.parse(table_data));
+			all_tables.push(JSON.parse(table_data));
+		}
+		res.writeHead(200, {'Content-Type': 'text/html'});
+		res.write(JSON.stringify(all_tables));
+		res.end();
+	}
+}

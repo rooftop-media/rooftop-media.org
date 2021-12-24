@@ -9,6 +9,8 @@
     
     <link rel="stylesheet" href="/pages/index.css">
     <script src="/pages/index.js"></script>
+    <script src="/pages/misc/register.js"></script>
+    <script src="/pages/misc/admin.js"></script>
 
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
     <meta content="utf-8" http-equiv="encoding">
@@ -20,9 +22,9 @@
     <div id="header">
       <img id="logo" src="/assets/logo.png" alt="Rooftop Media's logo!">
       <div style="display: flex;">
-        <button onclick="goto('/misc/login')">Log in</button>
-        <button onclick="goto('/misc/register')">Register</button>
-        <button onclick="goto('/misc/admin')">Admin Page</button>
+        <button onclick="goto('/misc/login', true)">Log in</button>
+        <button onclick="goto('/misc/register', true)">Register</button>
+        <button onclick="goto('/misc/admin', true)">Admin Page</button>
       </div>
     </div>  <!--  End of header div.      -->
 

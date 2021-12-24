@@ -1,4 +1,4 @@
-<div id="admin">
+<div id="admin" style="padding: 0px; display: flex;">
   <style>
     table {
       border-collapse: collapse;
@@ -7,23 +7,39 @@
       border: solid 1px black;
       padding: 5px 10px;
     }
+    #admin-content {
+      padding: 15px;
+    }
+    #admin-side-bar {
+      z-index: 1;
+      width: 300px;
+      height: 100vh;
+      background: #eeeeee;
+      color: black;
+      box-shadow: 0px 0px 10px rgba(0,0,0,.5);
+    }
   </style>
-  <div>Admin page</div>
-  <br/>
-  <table>
-    <thead>
-      <th>id</th>
-      <th>Username</th>
-      <th>Email</th>
-      <th>Phone</th>
-      <th>Password hash</th>
-    </thead>
-    <tr>
-      <td>1</td>
-      <td>benholland</td>
-      <td>bhollan5@kent.edu</td>
-      <td>3307038105</td>
-      <td>;alsdkfja;sldkfjl</td>
-    </tr>
-  </table>
+  <div id="admin-side-bar">
+    <div class="sidebar-section">Tables<hr /></div>
+  </div>
+  <div id="admin-content">
+    <div>Admin page</div>
+    <br/>
+    <table>
+      <thead>
+        <th>id</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Password hash</th>
+      </thead>
+      <tr>
+        <td>1</td>
+        <td>benholland</td>
+        <td>bhollan5@kent.edu</td>
+        <td>3307038105</td>
+        <td>;alsdkfja;sldkfjl</td>
+      </tr>
+    </table>
+  </div>
 </div>

@@ -3,9 +3,11 @@ var current_page  = window.location.pathname;
 var pages = ['/home', '/you/identity', '/you/job', '/storefront', '/about-us'];
 
 //  Navigate to a different page.
-function goto(page) {
+function goto(page, hide_sidebar=false) {
+  
   //  Changing the page's URL without triggering HTTP call...
   window.history.pushState({page: "/"}, "Rooftop Media", page);
+  
   //  Now we'll do the HTTP call here, to keep the SPA frame...
   const http = new XMLHttpRequest();
   http.open("GET", page + ".html");
@@ -15,7 +17,8 @@ function goto(page) {
     document.getElementById('main-content').innerHTML = http.responseText;
     current_page = page;
   }
-  //  Finally, update the sidebar's selected link.
+
+  //  Update the sidebar's selected link.
   var selected_elements = document.getElementsByClassName('selected');
   for (var i = 0; i < selected_elements.length; i++) {
     selected_elements[i].classList.remove('selected');
@@ -25,6 +28,14 @@ function goto(page) {
   if (document.getElementById(linkId)) {
     document.getElementById(linkId).classList.add('selected');
   }
+
+  //  Finally, hide the sidebar for pages without a side bar. 
+  if (hide_sidebar || linkParts[1] == 'misc') {
+    document.getElementById('side-bar').style.display = "none";
+  } else {
+    document.getElementById('side-bar').style.display = "block";
+  }
+
 }
 //  Boot the page.
 function boot() {

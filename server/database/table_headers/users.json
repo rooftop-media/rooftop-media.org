@@ -1,0 +1,29 @@
+{
+  "name": "Users",
+  "columns": [
+    {
+      "name": "Id",
+      "snakecase": "id"
+    },
+    {
+      "name": "Username",
+      "snakecase": "username"
+    },
+    {
+      "name": "Display Name",
+      "snakecase": "display_name"
+    },
+    {
+      "name": "Email",
+      "snakecase": "email"
+    },
+    {
+      "name": "Phone",
+      "snakecase": "phone"
+    },
+    {
+      "name": "Password hash",
+      "snakecase": "password"
+    }
+  ]
+}
