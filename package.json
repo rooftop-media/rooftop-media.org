@@ -1,0 +1,23 @@
+{
+  "name": "rooftop-media.org",
+  "version": "1.0.0",
+  "description": "The website for Rooftop Media",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rooftop-media/rooftop-media.org.git"
+  },
+  "author": "ben h",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rooftop-media/rooftop-media.org/issues"
+  },
+  "homepage": "https://github.com/rooftop-media/rooftop-media.org#readme",
+  "devDependencies": {
+    "typescript": "^4.5.3"
+  }
+}

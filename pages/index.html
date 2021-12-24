@@ -5,188 +5,48 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicons/favicon-16x16.png">
-    <link rel="manifest" href="/favicons/site.webmanifest">
-    <style>
+    <link rel="manifest" href="/assets/favicons/site.webmanifest">
+    
+    <link rel="stylesheet" href="/pages/index.css">
+    <script src="/pages/index.js"></script>
 
-      /*  Page set up.   */
-      html, body {
-        width: 100%;
-        height: 100%;
-        font-family: sans-serif;
-      }
-
-      #centered-column {
-        max-width: 800px;
-        margin: 0 auto;
-        padding-bottom: 400px;
-      }
-
-
-      /*  Header stuff.   */
-      #header {
-        text-align:    center;
-        padding-top:   100px;
-        margin-bottom: 50px;
-      }
-      #logo {
-        max-width: 200px;
-      }
-      .arrow-button {
-        color: #57B4C8;
-        cursor: pointer;
-        text-decoration: underline;
-      }
-      .hidden {
-        opacity: 0;
-        cursor: none;
-      }
-      #menu-option-picker {
-        display:         flex;
-        justify-content: space-around;
-        align-items:     center;
-        height:          100px;
-        border-bottom:   solid black 2px;
-      }
-
-      #menu-options {
-        display: flex;
-      }
-      #menu-options div {
-        color: #9047B8;
-        width: 120px;
-        cursor: pointer;
-      }
-      #menu-options div:hover {
-        text-decoration: underline;
-      }
-      #menu-options div.selected {
-        text-decoration: underline;
-        font-weight: bold;
-      }
-
-      /*  Page-content CSS.  This affects ALL pages!  */
-      .centered {
-        text-align: center;
-      }
-      .faded {
-        opacity: .5;
-      }
-      .bold {
-        color: #9047B8;
-        font-weight: bold; 
-      }
-      .link {
-        color: #9047B8;
-        text-decoration: underline;
-        cursor: pointer;
-      }
-      .flex-box {
-        display: flex;
-      }
-      .space-between {
-        justify-content: space-between;
-      }
-      #page-content div {
-        margin-bottom: 15px;
-        font-size: 16px;
-        line-height: 150%;
-      }
-    </style>
-
-    <script>
-      // Memory
-      var menu_position = 0;
-      var current_page  = window.location.pathname;
-      var pages = ['/home', '/website-plans', '/software', '/hardware', '/storefront', '/about-us'];
-
-      //  Moving left or right in the link display. 
-      function move_menu(amt) {
-        menu_position += amt;
-        if (menu_position < 0) {
-	        menu_position++;
-	      }
-        if (menu_position > 2) {
-	        menu_position--;
-	      }
-        draw_menu();
-      }
-      //  Drawing 4 links at a time. 
-      function draw_menu() {
-        for (var i = 0; i < 6; i++) {
-          var link_id = "menu-link-" + (i+1).toString();
-	        if (i >= menu_position && i < menu_position + 4) {
-	          document.getElementById(link_id).style.display = "block";
-	        } else {
-	          document.getElementById(link_id).style.display = "none";	
-	        }
-          if (pages[i] == current_page) {
-            document.getElementById(link_id).classList.add("selected");	
-          } else {
-            document.getElementById(link_id).classList.remove("selected");
-          }
-	      }
-        //  This part handles the back/fwd arrows.
-	      if (menu_position < 2) {
-	        document.getElementById("go-forward").classList.remove("hidden");	
-	      } else {
-	        document.getElementById("go-forward").classList.add("hidden");	
-	      }
-	      if (menu_position > 0) {
-	        document.getElementById("go-back").classList.remove("hidden");	
-	      } else {
-	        document.getElementById("go-back").classList.add("hidden");	
-	      }
-	    }
-      //  Navigate to a different page.
-      function goto(page) {
-        window.history.pushState({page: "/"}, "Rooftop Media", page);
-        const http = new XMLHttpRequest();
-        if (pages.indexOf(page) == -1) {
-          page = "/home";
-        }
-        console.log("Making an http req for: " + page + ".html")
-        http.open("GET", page + ".html");
-        http.send();
-        http.onreadystatechange = (e) => {
-          console.log("Response recieved! Updating page content.")
-          document.getElementById('page-content').innerHTML = http.responseText;
-          current_page = page;
-          draw_menu();
-        }
-      }
-      //  Boot the page.
-      function boot() {
-        draw_menu();
-        goto(current_page);
-      }
-    </script>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
 
   </head>
 
   <body onload="boot()">
-    <div id="centered-column">
 
-      <div id="header">
-	      <img id="logo" src="/assets/logo.png" alt="Rooftop Media's logo!">
-	      <div id="menu-option-picker">
-	      <div id="go-back" onclick="move_menu(-1)" class="arrow-button">&#9756; More </div>
-	      <div id="menu-options">
-	        <div id="menu-link-1" onclick="goto('/home')">Home page</div>
-          <div id="menu-link-2" onclick="goto('/website-plans')">Website Plans</div>
-	        <div id="menu-link-3" onclick="goto('/software')">Software</div>
-	        <div id="menu-link-4" onclick="goto('/hardware')">Hardware</div>
-	        <div id="menu-link-5" onclick="goto('/storefront')">Storefront</div>
-	        <div id="menu-link-6" onclick="goto('/about-us')">About Us</div>
-	      </div>
-	      <div id="go-forward" onclick="move_menu(1)" class="arrow-button"> More &#9758;</div>
-	    </div>
+    <div id="header">
+      <img id="logo" src="/assets/logo.png" alt="Rooftop Media's logo!">
+      <div style="display: flex;">
+        <button onclick="goto('/misc/login')">Log in</button>
+        <button onclick="goto('/misc/register')">Register</button>
+        <button onclick="goto('/misc/admin')">Admin Page</button>
       </div>
+    </div>  <!--  End of header div.      -->
 
-      <div id="page-content">
+    <div id="page-content">
+      <div id="side-bar">
+        <div class="sidebar-section">Personal info<hr /></div>
+        <div class="sidebar-link" onclick="goto('/you/identity')" id="you-identity">You</div>
+        <div class="sidebar-link" onclick="goto('/you/job')" id="you-job">Your job</div>
+        <div class="sidebar-link" onclick="goto('/you/house')" id="you-house">Your house</div>
+        <div class="sidebar-link" onclick="goto('/you/household')" id="you-household">Your household</div>
+        <div class="sidebar-link">Your health</div>
+        <div class="sidebar-link">Your pets</div>
+        <br />
+        <div class="sidebar-section">Food<hr /></div>
+        <div class="sidebar-link">Recipes</div>
+        <div class="sidebar-link">Ingredientpedia</div>
+        <div class="sidebar-link">Meal schedule</div>
+        <div class="sidebar-link">Your inventory</div>
+      </div>
+      <div id="main-content">
 	      <!--  Insert page content here!  -->
       </div>
-
     </div>
+
   </body>
 
 </html>
