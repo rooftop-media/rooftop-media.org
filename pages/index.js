@@ -8,7 +8,10 @@ function goto(page) {
   
   //  Changing the page's URL without triggering HTTP call...
   window.history.pushState({page: "/"}, "Rooftop Media", page);
-  
+  if (page == '/') {
+    page = '/misc/landing';
+  }
+
   //  Now we'll do the HTTP call here, to keep the SPA frame...
   const http = new XMLHttpRequest();
   http.open("GET", page + ".html");
@@ -60,7 +63,7 @@ function update_app_frame() {
 
 //  Boot the page.
 function boot() {
-
+  
   //  Log user in if they have a session id. 
   if (_session_id) {
     const http = new XMLHttpRequest();
@@ -75,10 +78,21 @@ function boot() {
   }
   
   //  Redirect away from register or login if we're logged in.
-  if ((_current_page == '/misc/register' || _current_page == '/misc/login') && _session_id != null) {
+  if ((_current_page == '/misc/register' || _current_page == '/misc/login') && _session_id != '') {
     _current_page = '/you/identity';
   }
 
   //  Go to the page. 
   goto(_current_page);
+}
+window.addEventListener('load', (event) => {
+  boot()
+});
+
+//  Log out
+function logout() {
+  localStorage.setItem('session_id', '')
+  _session_id = null;
+  _current_user = null;
+  goto('/misc/login');
 }

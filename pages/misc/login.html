@@ -1,6 +1,17 @@
 <div id="login">
+  <style>
+    #login p {
+      width: 400px;
+      display: flex;
+      justify-content: space-between;
+    }
+    #error {
+      color: red;
+    }
+  </style>
   <h3>Log in:</h3>
-  <p>Username: <input value="benholland" /></p>
-  <p>Password: <input type="password" /></p>
-  <button>Log in</button>
+  <p id="login-id">Username: <input value="benholland" id="username"/></p>
+  <p>Password: <input type="password" id="password"/></p>
+  <p id="error"></p>
+  <button onclick="login()">Log in</button>
 </div>

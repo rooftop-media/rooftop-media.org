@@ -9,6 +9,7 @@
     
     <link rel="stylesheet" href="/pages/index.css">
     <script src="/pages/index.js"></script>
+    <script src="/pages/misc/login.js"></script>
     <script src="/pages/misc/register.js"></script>
     <script src="/pages/misc/admin.js"></script>
 
@@ -17,10 +18,10 @@
 
   </head>
 
-  <body onload="boot()">
+  <body>
 
     <div id="header">
-      <img id="logo" src="/assets/logo.png" alt="Rooftop Media's logo!">
+      <img id="logo" src="/assets/logo.png" alt="Rooftop Media's logo!" onclick="goto('/')" style="cursor:pointer;">
       <div style="display: flex;" id="user-buttons">
         <button onclick="goto('/misc/login')">Log in</button>
         <button onclick="goto('/misc/register')">Register</button>
