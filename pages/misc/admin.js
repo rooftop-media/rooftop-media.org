@@ -1,4 +1,7 @@
 function get_admin_tables() {
+  if (!document.getElementById('admin-side-bar')) {
+    return;
+  }
   const http = new XMLHttpRequest();
   http.open("get", "/api/get-tables");
   http.send();
@@ -9,6 +12,7 @@ function get_admin_tables() {
       document.getElementById('admin-side-bar').innerHTML = `<div class="sidebar-section">Tables<hr /></div>`;
       for (let i = 0; i < tables.length; i++) {
         document.getElementById('admin-side-bar').innerHTML += `<div class="sidebar-link">${tables[i].name}</div>`;
+        console.log(tables[i].name)
       }
       
     }
@@ -16,4 +20,4 @@ function get_admin_tables() {
   }
 }
 
-get_admin_tables();
+setTimeout(get_admin_tables, 200)

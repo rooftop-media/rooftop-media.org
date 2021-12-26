@@ -15,15 +15,27 @@ function register() {
 
   const http = new XMLHttpRequest();
   http.open("POST", "/api/register");
-  http.send({
-    username,
+  http.send(JSON.stringify({
+    username: username,
     email,
     phone,
     password
-  });
+  }));
   http.onreadystatechange = (e) => {
-    console.log("Response recieved! Updating page content.")
-    document.getElementById('main-content').innerHTML = http.responseText;
-    current_page = page;
+    console.log(http.responseText)
+    let response;      
+    if (http.readyState == 4 && http.status == 200) {
+      response = JSON.parse(http.responseText)
+      if (!response.error) {
+        console.log("Response recieved! Logging you in.")
+        localStorage.setItem('session_id', response.session_id);
+        _session_id = response.session_id;
+        goto('/you/identity')
+      }
+      console.log("Error:" + response.msg)
+      document.getElementById('error').innerHTML = response.msg;
+    } else {
+      document.getElementById('error').innerHTML = "Error registering this user.";
+    }
   }
 }

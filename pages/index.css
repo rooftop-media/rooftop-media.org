@@ -90,3 +90,17 @@ input {
     font-family: CrimsonText;
     font-size: 18px;
 }
+
+button {
+    background: white;
+    font-family: CrimsonText;
+    cursor: pointer;
+    padding: 5px 15px;
+    box-shadow: 0px 0px 3px rgba(0,0,0,.5);
+    border-radius: 3px;
+    border: none;
+    transition-duration: .2s;
+}
+button:hover {
+    box-shadow: 0px 0px 8px rgba(0,0,0,.5);
+}

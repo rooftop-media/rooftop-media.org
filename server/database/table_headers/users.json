@@ -1,5 +1,6 @@
 {
   "name": "Users",
+  "snakecase": "users",
   "columns": [
     {
       "name": "Id",
@@ -24,6 +25,10 @@
     {
       "name": "Password hash",
       "snakecase": "password"
+    },
+    {
+      "name": "Password salt",
+      "snakecase": "salt"
     }
   ]
 }
