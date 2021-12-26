@@ -110,12 +110,23 @@ var crypto = require('crypto');
 
 //  This function fires when an /api/ route is requested with the GET method. 
 function api_GET_routes(api_route, res) {
-	console.log(`api route: ${api_route}`);
 
 	if (api_route == "/api/get-tables") {
 		let all_tables = DataBase.all_tables();
 		res.writeHead(200, {'Content-Type': 'text/html'});
 		res.write(JSON.stringify(all_tables));
+		res.end();
+	}
+	else if (api_route == "/api/users-table") {
+		let user_table = DataBase.table('users');
+		res.writeHead(200, {'Content-Type': 'text/html'});
+		res.write(JSON.stringify(user_table));
+		res.end();
+	}
+	else if (api_route == "/api/sessions-table") {
+		let sessions_table = DataBase.table('sessions');
+		res.writeHead(200, {'Content-Type': 'text/html'});
+		res.write(JSON.stringify(sessions_table));
 		res.end();
 	}
 	
@@ -128,11 +139,11 @@ function api_POST_routes(api_route, req, res) {
     req_data += chunk;
   })
   req.on('end', () => {
-		req_data = JSON.parse(req_data);
     
 		if (api_route == "/api/register") {
 			//  Make sure the user submitted doesn't have duplicate info...
-			let user_data = fs.readFileSync(__dirname + '/database/table_data/users.json', 'utf8')
+			req_data = JSON.parse(req_data);
+			let user_data = fs.readFileSync(__dirname + '/database/table_rows/users.json', 'utf8')
 			user_data = JSON.parse(user_data);
 			let response = {
 				error: false,
@@ -152,22 +163,45 @@ function api_POST_routes(api_route, req, res) {
 					response.msg = 'Phone number already taken.';
 				}
 			}
-			//  If it's not a duplicate, add an id, encrypt the pass, and save it. 
+			//  If it's not a duplicate, encrypt the pass, and save it. 
 			if (!response.error) {
-				req_data.id = user_data.length;
 				req_data.salt = crypto.randomBytes(16).toString('hex');
 				req_data.password = crypto.pbkdf2Sync(req_data.password, req_data.salt, 1000, 64, `sha512`).toString(`hex`);
-				
-				// DataBase.table('users').insert(req_data);
-				user_data.push(req_data);
-				fs.writeFileSync(__dirname + '/database/table_data/users.json', JSON.stringify(user_data));
+				//  Add the user to the db.
+				let user_id = DataBase.table('users').insert(req_data);
+				//  Add a session to the db.
+				let expire_date = new Date()
+				expire_date.setDate(expire_date.getDate() + 30);
+				response.session_id = DataBase.table('sessions').insert({
+					user_id: user_id,
+					expires: expire_date
+				})
 			}
 			res.writeHead(200, {'Content-Type': 'text/html'});
 			res.write(JSON.stringify(response));
 			res.end();
-		
-		} else if (api_route == "/api/login") {
+		} 
+		//  Log user in.
+		else if (api_route == "/api/login") {
 
+		}
+		//  Get user by user session.
+		else if (api_route == "/api/user-by-session") {
+			res.writeHead(200, {'Content-Type': 'text/html'});
+			let session_data = DataBase.table('sessions').find({ id: req_data });
+			if (session_data.length < 1) {
+				res.write("No session found.");
+				res.end();
+				return;
+			}
+			let user_data = DataBase.table('users').find({ id: session_data[0].user_id });
+			if (user_data.length < 1) {
+				res.write(`No user found for session ${session_data[0].id}.`);
+				res.end();
+			} else {
+				res.write(JSON.stringify(user_data[0]));
+				res.end();
+			}
 		}
   })
 	

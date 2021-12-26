@@ -6,16 +6,35 @@ var fs   = require('fs');
 class Table {
   constructor(name) {
     this.name = name;
-    this.columns = fs.readFileSync(__dirname + '/table_headers/' + name, 'utf8');
-    this.rows = fs.readFileSync(__dirname + '/table_data/' + name, 'utf8');
+    this.columns = JSON.parse(fs.readFileSync(`${__dirname}/table_columns/${name}.json`, 'utf8'));
+    this.rows = JSON.parse(fs.readFileSync(`${__dirname}/table_rows/${name}.json`, 'utf8'));
   }
 
   find(query) {
-
+    let query_keys = Object.keys(query);
+    let results = [];
+    for (let i = 0; i < this.rows.length; i++) {
+      let is_result = true;
+      for (let j = 0; j < query_keys.length; j++) {
+        let key = query_keys[j];
+        if (this.rows[i][key] != query[key]) {
+          is_result = false;
+        }
+      }
+      if (is_result) {
+        results.push(this.rows[i]);
+      }
+    }
+    return results;
   }
 
   insert(row_data) {
-
+    row_data.id = this.columns.max_id;
+    this.columns.max_id++;
+    this.rows.push(row_data);
+    fs.writeFileSync(`${__dirname}/table_rows/${this.name}.json`, JSON.stringify(this.rows, null, 2));
+    fs.writeFileSync(`${__dirname}/table_columns/${this.name}.json`, JSON.stringify(this.columns, null, 2));
+    return row_data.id;
   }
 
   update(query, update) {
@@ -34,11 +53,11 @@ module.exports = {
   },
 
   all_tables: function() {
-    let table_files = fs.readdirSync(__dirname + '/table_headers')
-		var all_tables = [];
+    let table_files = fs.readdirSync(__dirname + '/table_columns')
+		let all_tables = [];
 		for (let i = 0; i < table_files.length; i++) {
 			let table_file = table_files[i];
-			let table_data = fs.readFileSync(__dirname + '/table_headers/' + table_file, 'utf8')
+			let table_data = fs.readFileSync(__dirname + '/table_columns/' + table_file, 'utf8')
 			all_tables.push(JSON.parse(table_data));
 		}
     return all_tables;

@@ -32,8 +32,6 @@ function register() {
         _session_id = response.session_id;
         goto('/you/identity')
       }
-      console.log("Error:" + response.msg)
-      document.getElementById('error').innerHTML = response.msg;
     } else {
       document.getElementById('error').innerHTML = "Error registering this user.";
     }

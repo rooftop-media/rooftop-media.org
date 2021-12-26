@@ -40,11 +40,17 @@ function update_app_frame() {
   } else {
     document.getElementById('side-bar').style.display = "block";
   }
+  
+  //  Set up admin page.
+  if (linkParts[2] == 'admin') {
+    get_admin_tables()
+  }
 
   //  Update the user buttons.
   if (_current_user && _current_user.username && _session_id) {
-    document.getElementById('user-buttons').innerHTML = `<button onclick="logout()">Log in</button>`;
+    document.getElementById('user-buttons').innerHTML = `<button onclick="logout()">Log out</button>`;
     document.getElementById('user-buttons').innerHTML += `<button>${_current_user.username}</button>`;
+    document.getElementById('user-buttons').innerHTML += `<button onclick="goto('/misc/admin')">Admin Page</button>`;
   } else {
     document.getElementById('user-buttons').innerHTML = `<button onclick="goto('/misc/login')">Log in</button>`;
     document.getElementById('user-buttons').innerHTML += `<button onclick="goto('/misc/register')">Register</button>`;
@@ -54,7 +60,21 @@ function update_app_frame() {
 
 //  Boot the page.
 function boot() {
+
+  //  Log user in if they have a session id. 
+  if (_session_id) {
+    const http = new XMLHttpRequest();
+    http.open("POST", "/api/user-by-session");
+    http.send(_session_id);
+    http.onreadystatechange = (e) => {
+      if (http.readyState == 4 && http.status == 200) {
+        _current_user = JSON.parse(http.responseText);
+        update_app_frame()
+      }
+    }
+  }
   
+  //  Redirect away from register or login if we're logged in.
   if ((_current_page == '/misc/register' || _current_page == '/misc/login') && _session_id != null) {
     _current_page = '/you/identity';
   }

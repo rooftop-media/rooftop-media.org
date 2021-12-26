@@ -1,26 +1,32 @@
 {
   "name": "Users",
   "snakecase": "users",
+  "max_id": 2,
   "columns": [
     {
       "name": "Id",
-      "snakecase": "id"
+      "snakecase": "id",
+      "unique": true
     },
     {
       "name": "Username",
-      "snakecase": "username"
+      "snakecase": "username",
+      "unique": true
     },
     {
       "name": "Display Name",
-      "snakecase": "display_name"
+      "snakecase": "display_name",
+      "unique": true
     },
     {
       "name": "Email",
-      "snakecase": "email"
+      "snakecase": "email",
+      "unique": true
     },
     {
       "name": "Phone",
-      "snakecase": "phone"
+      "snakecase": "phone",
+      "unique": true
     },
     {
       "name": "Password hash",
