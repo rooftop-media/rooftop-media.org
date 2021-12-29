@@ -7,6 +7,9 @@
     <p>Phone: <input value="" id="phone" /></p>
     <p>Password: <input type="password" id="password" /></p>
     <p>Confirm Password: <input type="password" id="password_confirm" /></p>
+    <hr />
+    <p>Admin Password: <input type="password" id="admin_password" /></p>
+    <p>[rooftop media is not ready for the public to register accounts, yet.  Sorry.]</p>
     <p id="error"></p>
     <button onclick="register()">Register</button>
   </div>
@@ -14,6 +17,8 @@
 
 <script>
   function register() {
+    alert('Incorrect admin pass')
+    return;
     var username = document.getElementById('username').value;
     var display_name = document.getElementById('display_name').value;
     var email = document.getElementById('email').value;
