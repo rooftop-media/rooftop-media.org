@@ -32,18 +32,17 @@
 
 <script>
 
-  if (!month_shift || typeof month_shift === 'undefined') {
-    let month_shift = 0; 
-    let year_shift = 0;
+  let month_shift = 0; 
+  let year_shift = 0;
 
-    let year = 0;
-    let month = '';
-    let month_day_amt = 0;
-    let current_date = 0;
+  let year = 0;
+  let month = '';
+  let month_day_amt = 0;
+  let current_date = 0;
 
-    let starting_weekday = 0;
-    let month_end_padding = 0;
-  }
+  let starting_weekday = 0;
+  let month_end_padding = 0;
+  
 
   //  Get data to display the current calendar. 
   function populate_calendar() {
