@@ -1,0 +1,45 @@
+{
+  "name": "User Houses",
+  "snakecase": "user_houses",
+  "max_id": 1,
+  "columns": [
+    {
+      "name": "Id",
+      "snakecase": "id",
+      "unique": true
+    },
+    {
+      "name": "User Id",
+      "snakecase": "user_id",
+      "unique": true
+    },
+    {
+      "name": "Ownership",
+      "snakecase": "ownership"
+    },
+    {
+      "name": "Home type",
+      "snakecase": "home_type"
+    },
+    {
+      "name": "Landlord",
+      "snakecase": "landlord"
+    },
+    {
+      "name": "Electric",
+      "snakecase": "electric"
+    },
+    {
+      "name": "Water",
+      "snakecase": "water"
+    },
+    {
+      "name": "Internet",
+      "snakecase": "internet"
+    },
+    {
+      "name": "Gas",
+      "snakecase": "gas"
+    }
+  ]
+}

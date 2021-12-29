@@ -1,0 +1,19 @@
+[ ] Figure out where the sidebar needs to pop up, make it happen.
+    - The landing, register, and login pages should have no side bar.
+    - The admin page needs the admin panel side bar.
+
+[ ] Test login / log out / register
+    - They work, automatic tests would be good.
+
+[ ] Make the user menu button nicer
+[ ] Add profile picture.
+
+[x] Make a convenient way to add js to each page.
+
+[x] Implement /you/identity
+    - Each page will need a JS script.
+
+[ ] Make it mobile-friendly
+
+[x] Host it on rooftop-media.org
+[ ] Clean up the landing page

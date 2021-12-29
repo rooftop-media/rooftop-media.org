@@ -1,0 +1,113 @@
+<template>
+  <div class="text-block">
+    <h2>Basic Tools</h2>
+    <p>Below is a description of the basic tools that Rooftop Media relies on to run.</p>
+  </div>
+  <br />
+  <div class="text-block">
+    <h3>Remote server</h3>
+    <p><a href="https://en.wikipedia.org/wiki/DigitalOcean" target="_blank">Digital Ocean</a> is a for-profit company founded in 2011.
+      The company is headquartered in NYC, but owns datacenters worldwide. 
+    </p>
+    <p>
+      I rent server space in one of their NYC datacenters, where we have access to a server running <a href="https://en.wikipedia.org/wiki/Ubuntu">Ubuntu</a> 20.04. 
+      It costs <b>$20 per month</b>.
+    </p>
+    <p>
+      The server has an <a href="https://en.wikipedia.org/wiki/X86-64" target="_blank">x64</a> architecture.  
+      That means, when our server's code is compiled or interpreted into assembly language, the assembly is written in the 64 bit version of the x86 instruction set.
+      The x86 instruction set was first released in 1999.
+    </p>
+    <p>Our server has 2GB of RAM and 80GB of disk space.</p>
+  </div>
+  <br />
+  <div class="text-block">
+    <h3>Domain name</h3>
+    <p>
+      I <a href="https://en.wikipedia.org/wiki/Domain_registration" target="_blank">registered</a> the domain name <u>rooftop-media.org</u> from 
+      the domain name registrar, <a href="https://en.wikipedia.org/wiki/Namecheap" target="_blank">Namecheap</a>, a company in Pheonix, Arizona, founded in 2000. 
+    </p>
+    <p>
+      I pay about <b>$13 per year</b> for the domain, and have it registered until 2031.
+    </p>
+    <p>
+      <u>rooftop-media.org</u> directs browsers to our Digital Ocean server.
+      This is done via the <a href="https://en.wikipedia.org/wiki/Domain_Name_System" target="_blank">DNS</a> settings, where the "nameserver" record is set to "ns1.digitalocean.com".
+    </p>
+  </div>
+  <br />
+  <div class="text-block">
+    <h3>Reverse proxy</h3>
+    <p>
+      So, Namecheap forwards requests to <u>rooftop-media.org</u> to our Ubuntu server.
+    </p>
+    <p>
+      From there, the server uses a <a href="https://en.wikipedia.org/wiki/Reverse_proxy" target="_blank">reverse proxy</a> service called Nginx.
+      Nginx is a "proxy" (basically a middleman) that gets request infromation from the NodeJS <a href="https://en.wikipedia.org/wiki/Process_(computing)" target="_blank">process</a>
+      that's running on our server, on the internal port "localhost:8080".
+    </p>
+    <p>Nginx forwards requests to this internal process, gets the responses, and then forwards them to the requesting client.</p>
+  </div>
+  <br />
+  <div class="text-block">
+    <h3>NodeJS</h3>
+    <p>
+      The server's code is written in <a href="https://en.wikipedia.org/wiki/Node.js" target="_blank">NodeJS</a>, a version of Javascript that runs outside web browsers.
+    </p>
+    <p>The NodeJS code takes advantage of several built-in features of NodeJS, including:</p>
+    <ul>
+      <li><b>http</b> - tools to listen for requests and send responses.</li>
+      <li><b>path</b> - tools to format filepaths.</li>
+      <li><b>fs</b> - tools to read & write files on the server.</li>
+      <li><b>crypto</b> - tools to encrypt files or hash passwords.</li>
+    </ul>
+    <p>NodeJS has other tools available as well, but that's all I used.</p>
+  </div>
+  <br />
+  <div class="text-block">
+    <h3>PM2</h3>
+    <p>
+      The NodeJS process can be started and stopped on its own, with the <code>node</code> terminal script.
+    </p>
+    <p>
+      However, I use the NodeJS process manager <a href="https://en.wikipedia.org/wiki/PM2_(software)" target="_blank">pm2</a>,
+      to keep the process running in the background. 
+    </p>
+    <p>
+      This NodeJS hosting set up is based on this
+      <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-ubuntu-16-04" target="_blank">digital ocean</a>
+      tutorial.
+    </p>
+  </div>
+  <br />
+  <div class="text-block">
+    <h3>Browser standards</h3>
+    <p>
+      The server sends .html files to web browsers, which contains instructions to render the website content.
+    </p>
+    <p>
+      The server also sends other files, like images and CSS, to add or stylize web page content.
+      I rely on web browser standards to style content correctly, based on the CSS I send.
+    </p>
+    <p>
+      The server also sends Javascript files to manipulate web page content.
+      This web browser javascript is similar to the server's NodeJS, but the server-specific tools are replaced by frontend-specific tools.
+    </p>
+    <p>Here are the main frontend-specific JS tools I use:</p>
+    <ul>
+      <li><b>window.location.pathname</b> - gets the current page route.</li>
+      <li><b>window.history.pushState()</b> - change the current route without reloading.</li>
+      <li><b>XMLHttpRequest</b> - request a resource from the server.</li>
+      <li><b>localStorage</b> - set or get data to be stored in the browser, like session data.</li>
+      <li><b>document</b> - read or change data rendered in the page.</li>
+    </ul>
+  </div>
+  <br />
+  <div class="text-block">
+    <h3>Code storage</h3>
+    <p>
+      The website's code is stored in a Github repository, <a href="https://github.com/rooftop-media/rooftop-media.org" target="_blank">here</a>.
+    </p>
+  </div>
+  <br /><br /><br /><br />
+</template>

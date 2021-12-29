@@ -1,17 +1,54 @@
-<div id="login">
-  <style>
-    #login p {
-      width: 400px;
-      display: flex;
-      justify-content: space-between;
+<template>
+  <div id="login" class="text-form">
+    <h3>Log in:</h3>
+    <p id="login-id">Username: <input value="benholland" id="username"/></p>
+    <p>Password: <input type="password" id="password"/></p>
+    <p id="error"></p>
+    <button onclick="login()">Log in</button>
+  </div>
+</template>
+
+<style>
+  #login p {
+    width: 400px;
+    display: flex;
+    justify-content: space-between;
+  }
+  #error {
+    color: red;
+  }
+</style>
+
+<script>
+  function login() {
+    var username = document.getElementById('username').value;
+    var password = document.getElementById('password').value;
+    if (username.length < 2) {
+      document.getElementById('error').innerHTML = 'Valid username required.';
+      return;
     }
-    #error {
-      color: red;
+
+    const http = new XMLHttpRequest();
+    http.open("POST", "/api/login");
+    http.send(JSON.stringify({
+      username: username,
+      password: password
+    }));
+    http.onreadystatechange = (e) => {
+      let response;      
+      if (http.readyState == 4 && http.status == 200) {
+        response = JSON.parse(http.responseText)
+        if (!response.error) {
+          localStorage.setItem('session_id', response.session_id);
+          _session_id = response.session_id;
+          _current_user = response.user_data;
+          goto('/you/identity')
+        } else {
+          document.getElementById('error').innerHTML = response.msg;
+        }
+      } else {
+        document.getElementById('error').innerHTML = "Error registering this user.";
+      }
     }
-  </style>
-  <h3>Log in:</h3>
-  <p id="login-id">Username: <input value="benholland" id="username"/></p>
-  <p>Password: <input type="password" id="password"/></p>
-  <p id="error"></p>
-  <button onclick="login()">Log in</button>
-</div>
+  }
+</script>

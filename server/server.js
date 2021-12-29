@@ -7,6 +7,7 @@ console.log("\x1b[32m >\x1b[0m Starting the rooftop server, at \x1b[36mlocalhost
 var http = require('http');
 var path = require('path');
 var fs   = require('fs');
+const Cookbook = require('./cookbook.js');
 
 //  This function will fire upon every request to our server.
 function server_request(req, res) {
@@ -33,18 +34,15 @@ function server_request(req, res) {
 
 			// if (url == "/") {  } else if (url == "/admin") { }
 	}
+
 	/*  Getting a page for inside the SPA frame.                   */
 	else if (extname == ".html") {
-		let file = "";
-		try {
-			file = fs.readFileSync( __dirname + "/../pages" + url );
-		} catch {
-			file = fs.readFileSync( __dirname + "/../pages/misc/404.html" );
-		}
+		let page_book = Cookbook.cook(url);
 		res.writeHead(200, {'Content-Type': 'text/html'});
-		res.write(file);
+		res.write(JSON.stringify(page_book));
 		res.end();
 	}
+
 	/*  We also might be pinged for a .png, or something. Handle that here.  */
 	else {
 		fs.readFile( __dirname + '/..' + url, function(error, content) {
@@ -66,6 +64,7 @@ function server_request(req, res) {
 			}
 		});
 	}
+
 }
 
 
@@ -129,6 +128,18 @@ function api_GET_routes(api_route, res) {
 		res.write(JSON.stringify(sessions_table));
 		res.end();
 	}
+	else if (api_route == "/api/user_jobs-table") {
+		let user_jobs_table = DataBase.table('user_jobs');
+		res.writeHead(200, {'Content-Type': 'text/html'});
+		res.write(JSON.stringify(user_jobs_table));
+		res.end();
+	}
+	else if (api_route == "/api/user_health-table") {
+		let user_health_table = DataBase.table('user_health');
+		res.writeHead(200, {'Content-Type': 'text/html'});
+		res.write(JSON.stringify(user_health_table));
+		res.end();
+	}
 	
 }
 
@@ -150,7 +161,6 @@ function api_POST_routes(api_route, req, res) {
 				msg: '',
 				session_id: ''
 			}
-			let is_unique = true;
 			for (let i = 0; i < user_data.length; i++) {
 				if (user_data[i].username == req_data.username) {
 					response.error = true;
@@ -181,6 +191,7 @@ function api_POST_routes(api_route, req, res) {
 			res.write(JSON.stringify(response));
 			res.end();
 		} 
+
 		//  Log user in.
 		else if (api_route == "/api/login") {
 			res.writeHead(200, {'Content-Type': 'text/html'});
@@ -215,7 +226,8 @@ function api_POST_routes(api_route, req, res) {
 			res.write(JSON.stringify(response));
 			res.end();
 		}
-		//  Get user by user session.
+
+		//  Get user by user session. (Yes this is a POST)
 		else if (api_route == "/api/user-by-session") {
 			res.writeHead(200, {'Content-Type': 'text/html'});
 			let session_data = DataBase.table('sessions').find({ id: req_data });
@@ -233,6 +245,76 @@ function api_POST_routes(api_route, req, res) {
 				res.end();
 			}
 		}
+
+		//  Update user job info.
+		else if (api_route == "/api/update-user-job") {
+			res.writeHead(200, {'Content-Type': 'text/html'});
+			req_data = JSON.parse(req_data);
+			DataBase.table('user_jobs').add_or_update(
+				{ user_id: req_data.user_id },
+				req_data
+			);
+		}
+		//  Get job info by user ID
+		else if (api_route == "/api/user-job-by-user") {
+			res.writeHead(200, {'Content-Type': 'text/html'});
+			let user_job_data = DataBase.table('user_jobs').find({ user_id: req_data });
+			if (user_job_data.length < 1) {
+				console.log('{error: no job found}')
+				res.write("{error: no job found}");
+				res.end();
+				return;
+			}
+			res.write(JSON.stringify(user_job_data[0]));
+			res.end();
+		}
+
+		//  Update user house info.
+		else if (api_route == "/api/update-user-house") {
+			res.writeHead(200, {'Content-Type': 'text/html'});
+			req_data = JSON.parse(req_data);
+			DataBase.table('user_houses').add_or_update(
+				{ user_id: req_data.user_id },
+				req_data
+			);
+		}
+		//  Get house info by user ID
+		else if (api_route == "/api/user-house-by-user") {
+			res.writeHead(200, {'Content-Type': 'text/html'});
+			let user_house_data = DataBase.table('user_houses').find({ user_id: req_data });
+			if (user_house_data.length < 1) {
+				console.log('{error: no house found}')
+				res.write("{error: no house found}");
+				res.end();
+				return;
+			}
+			res.write(JSON.stringify(user_house_data[0]));
+			res.end();
+		}
+
+		//  Update user health info.
+		else if (api_route == "/api/update-user-health") {
+			res.writeHead(200, {'Content-Type': 'text/html'});
+			req_data = JSON.parse(req_data);
+			DataBase.table('user_health').add_or_update(
+				{ user_id: req_data.user_id },
+				req_data
+			);
+		}
+		//  Get health info by user ID
+		else if (api_route == "/api/user-health-by-user") {
+			res.writeHead(200, {'Content-Type': 'text/html'});
+			let user_health_data = DataBase.table('user_health').find({ user_id: req_data });
+			if (user_health_data.length < 1) {
+				console.log('{error: no health found}')
+				res.write("{error: no health found}");
+				res.end();
+				return;
+			}
+			res.write(JSON.stringify(user_health_data[0]));
+			res.end();
+		}
+
   })
 	
 }

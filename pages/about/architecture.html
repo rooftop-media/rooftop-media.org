@@ -1,0 +1,71 @@
+<template>
+  <div class="text-block">
+    <h2>Architecture</h2>
+    <p>This page describes the patterns I use to turn the basic tools into usable web pages.</p>
+  </div>
+  <br />
+  <div class="text-block">
+    <h3>The server</h3>
+    <p>
+      The server contains a script file called "server.js".
+    </p>
+    <p>When that script is run with the NodeJS engine, it starts a process that <i>listens</i> on the server's port, "localhost:8080".
+      This process listens for resource requests, and responds with resources.
+    </p>
+    <p>
+      I have the server set up to listen for three types of request:
+    </p>
+    <ol>
+      <li><b>Pages</b> are requested with extension-less URLs. For example, the request <code>/tools/calendar</code> will respond with the Calendar page*.</li>
+      <li><b>File resources</b> are requested with filepaths, with extensions. For example, <code>/assets/favicons/favicon.ico</code> will respond with the favicon image.</li>
+      <li><b>API paths</b> are requested with extension-less URLs starting with <code>/api</code>. For example, <code>/api/login</code> will respond with a success or failure message.</li>
+    </ol>
+    <p>
+      *The page requests technically <i>all</i> respond with <code>index.html</code>, no matter what.  
+      <code>index.html</code> then loads the rest of the page as a file resource, for example, <code>/tools/calendar.html</code>. 
+      This pattern makes rooftop-media.org a <a href="https://en.wikipedia.org/wiki/Single-page_application" target="_blank">Single Page App (SPA)</a>.
+    </p>
+  <br />
+  <div class="text-block">
+    <h3>The database</h3>
+    <p>
+      The <code>/api/</code> requests are for reading and writing to the database.
+    </p>
+    <p>
+      The "database" I use is just a bunch of <code>.json</code> files. 
+      "User" information is stored in <code>/database/table_rows/users.json</code>, for example. 
+    </p>
+    <p>
+      When someone tries to log in on their web browser, the frontend JS requests <code>/api/login</code>, with an HTTP POST request.
+      The <i>body</i> of the post request contains their username and password. 
+    </p>
+    <p>
+      When the server gets such a request, it checks the database (the records in <code>users.json</code>) for a matching username and password hash, 
+      and then responds with a new user session (creating a new record in <code>sessions.json</code>) and a success message.
+    </p>
+  <br />
+  <div class="text-block">
+    <h3>The pages</h3>
+    <p>
+      As said above, rooftop-media.org is a single page app.  The "pages" of the website are each inserted into the "frame" of the single "index.html".
+    </p>
+    <p>
+      This SPA pattern has a few advantages:
+    </p>
+    <ol>
+      <li>The single-page frame, including the header and sidebar, can be reused.</li>
+      <li>Page transitions don't reload the entire page.</li>
+      <li>We can do some fancy tricks with individual pages as we load them.</li>
+    </ol>
+    <p>
+      
+    </p>
+  <br />
+  <div class="text-block">
+    <h3>Reusable components</h3>
+    <p>
+      ...
+    </p>
+  <br />
+  <br /><br /><br /><br />
+</template>

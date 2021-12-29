@@ -1,0 +1,45 @@
+{
+  "name": "User Jobs",
+  "snakecase": "user_jobs",
+  "max_id": 1,
+  "columns": [
+    {
+      "name": "Id",
+      "snakecase": "id",
+      "unique": true
+    },
+    {
+      "name": "User Id",
+      "snakecase": "user_id",
+      "unique": true
+    },
+    {
+      "name": "Workplace",
+      "snakecase": "workplace"
+    },
+    {
+      "name": "Position",
+      "snakecase": "position"
+    },
+    {
+      "name": "Phone",
+      "snakecase": "phone"
+    },
+    {
+      "name": "Email",
+      "snakecase": "email"
+    },
+    {
+      "name": "Schedule",
+      "snakecase": "schedule"
+    },
+    {
+      "name": "Hours per week",
+      "snakecase": "hours"
+    },
+    {
+      "name": "Wage",
+      "snakecase": "wage"
+    }
+  ]
+}

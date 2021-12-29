@@ -1,20 +1,59 @@
-<div id="register">
-  <style>
-    #register p {
-      width: 400px;
-      display: flex;
-      justify-content: space-between;
+<template>
+  <div id="register" class="text-form">
+    <h3>Register:</h3>
+    <p>Username: <input value="" id="username" /></p>
+    <p>Display name: <input value="" id="display_name" /></p>
+    <p>Email: <input value="" id="email" /></p>
+    <p>Phone: <input value="" id="phone" /></p>
+    <p>Password: <input type="password" id="password" /></p>
+    <p>Confirm Password: <input type="password" id="password_confirm" /></p>
+    <p id="error"></p>
+    <button onclick="register()">Register</button>
+  </div>
+</template>
+
+<script>
+  function register() {
+    var username = document.getElementById('username').value;
+    var display_name = document.getElementById('display_name').value;
+    var email = document.getElementById('email').value;
+    var phone = document.getElementById('phone').value;
+    var password = document.getElementById('password').value;
+    var password_confirm = document.getElementById('password_confirm').value;
+    if (password != password_confirm) {
+      document.getElementById('error').innerHTML = 'Passwords must match.';
+      return;
     }
-    #error {
-      color: red;
+    if (username.length < 2) {
+      document.getElementById('error').innerHTML = 'Valid username required.';
+      return;
     }
-  </style>
-  <h3>Register:</h3>
-  <p>Username: <input value="benholland" id="username" /></p>
-  <p>Email: <input value="bhollan5@kent.edu" id="email" /></p>
-  <p>Phone: <input value="3307038105" id="phone" /></p>
-  <p>Password: <input type="password" id="password" /></p>
-  <p>Confirm Password: <input type="password" id="password_confirm" /></p>
-  <p id="error"></p>
-  <button onclick="register()">Register</button>
-</div>
+
+    const http = new XMLHttpRequest();
+    http.open("POST", "/api/register");
+    http.send(JSON.stringify({
+      username: username,
+      display_name,
+      email,
+      phone,
+      password
+    }));
+    http.onreadystatechange = (e) => {
+      console.log(http.responseText)
+      let response;      
+      if (http.readyState == 4 && http.status == 200) {
+        response = JSON.parse(http.responseText)
+        if (!response.error) {
+          console.log("Response recieved! Logging you in.")
+          localStorage.setItem('session_id', response.session_id);
+          _session_id = response.session_id;
+          goto('/you/identity')
+        } else {
+          document.getElementById('error').innerHTML = response.msg;
+        }
+      } else {
+        document.getElementById('error').innerHTML = "Error registering this user.";
+      }
+    }
+  }
+</script>

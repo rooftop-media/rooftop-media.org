@@ -1,5 +1,68 @@
-<div id="you">
-  <div class="form input">
-    Your name: <input value="Ben Holland" />
+<template>
+  <div id="identity">
+    <div class="text-form">
+      <h2>Your Identity</h2>
+      <p>Username: <input id="username" /></p>
+      <p>Display name: <input id="display_name" /></p>
+      <p>Phone: <input id="phone" /></p>
+      <p>Email: <input id="email" /></p>
+      <hr />
+      <p>Birthday: <input /></p>
+      <p>Hometown: <input /></p>
+      <hr />
+      <p>Height: <input /></p>
+      <p>Hair color: <input /></p>
+      <p>Skin color: <input /></p>
+    </div>
+    <button onclick="update_identity()">
+      Update identity info
+    </button>
   </div>
-</div>
+</template>
+
+<script>
+  document.getElementById('username').value = _current_user.username;
+  document.getElementById('display_name').value = _current_user.display_name;
+  document.getElementById('phone').value = _current_user.phone;
+  document.getElementById('email').value = _current_user.email;
+
+  function update_identity() {
+    var phone = document.getElementById('phone').value;
+    var password = document.getElementById('password').value;
+    var password_confirm = document.getElementById('password_confirm').value;
+    if (password != password_confirm) {
+      document.getElementById('error').innerHTML = 'Passwords must match.';
+      return;
+    }
+    if (username.length < 2) {
+      document.getElementById('error').innerHTML = 'Valid username required.';
+      return;
+    }
+
+    const http = new XMLHttpRequest();
+    http.open("POST", "/api/register");
+    http.send(JSON.stringify({
+      username: username,
+      email,
+      phone,
+      password
+    }));
+    http.onreadystatechange = (e) => {
+      console.log(http.responseText)
+      let response;      
+      if (http.readyState == 4 && http.status == 200) {
+        response = JSON.parse(http.responseText)
+        if (!response.error) {
+          console.log("Response recieved! Logging you in.")
+          localStorage.setItem('session_id', response.session_id);
+          _session_id = response.session_id;
+          goto('/you/identity')
+        } else {
+          document.getElementById('error').innerHTML = response.msg;
+        }
+      } else {
+        document.getElementById('error').innerHTML = "Error registering this user.";
+      }
+    }
+  }
+</script>
