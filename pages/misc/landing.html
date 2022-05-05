@@ -1,3 +1,78 @@
 <template>
-  <div>This is the landing page!</div>
+  <div id="landing">
+    <div>
+      <h2>Hello!</h2>
+      <p>This website is still under construction. </p>
+      <p>Feel free to check out our current projects:</p>
+      <br/>
+      <a class="project-link" href="https://github.com/rooftop-media/ktty" target="_blank">
+        <img src="../../assets/landing/ktty_icon.png" />
+        <div>
+          <h3>kTTY</h3>
+          <p>a command line code editor and email browser that you can rebuild using a tutorial!</p>
+        </div>
+      </a>
+      <a class="project-link" href="https://www.hexaguessimal.com/" target="_blank">
+        <img src="../../assets/landing/hexaguessimal_icon.png" />
+        <div>
+          <h3>hexaguessimal.com</h3>
+          <p>a game where you can learn about color by guessing hexadecimal values!</p>
+        </div>
+      </a>
+      <a class="project-link" href="https://www.benh.website/" target="_blank">
+        <img src="../../assets/landing/benh_icon.png" />
+        <div>
+          <h3>benh.website</h3>
+          <p>the personal website of Rooftop Media's creator, Ben Holland!</p>
+        </div>
+      </a>
+      <br/><br/><br/><br/><br/><br/><br/><br/>
+    </div>
+    <img src="../../assets/under-construction.png" />
+  </div>
+  <style>
+    #landing {
+      width: 600px;
+      margin: auto;
+      margin-top: 100px;
+      display: flex;
+      justify-content: space-between;
+    }
+    h3 {
+      font-family: sans-serif;
+      margin: 0px;
+    }
+    .project-link {
+      display: flex;
+      text-decoration: none;
+      color: black;
+      background: #E7E7E7;
+      padding: 20px;
+      border-radius: 7px;
+      width: 70%;
+      box-shadow: 0px 0px 7px rgba(0,0,0,.6);
+      margin-bottom: 20px;
+      transform: scale(1);
+      transition-duration: .5s;
+      cursor: pointer;
+    }
+    .project-link p {
+      margin: 0px;
+      margin-top: 5px;
+      opacity: 0.5;
+    }
+    .project-link img {
+      margin-right: 10px;
+    }
+    .project-link:hover {
+      transform: scale(1.1);
+      box-shadow: 0px 0px 10px rgba(0,0,0,.6);
+    }
+    .project-link:hover p {
+      opacity: 1;
+    }
+    img {
+      align-self: flex-start;
+    }
+  </style>
 </template>

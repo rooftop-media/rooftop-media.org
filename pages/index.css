@@ -5,13 +5,13 @@
   src: url(/assets/fonts/CrimsonText-Regular.ttf);
 }
 
-div {
-  font-family: myFirstFont;
-}
-
 html, body {
     font-family: CrimsonText;
     margin: 0;
+}
+
+p {
+    font-family: sans-serif;
 }
 
 /* The header, including the RTM logo and user profile button  */
