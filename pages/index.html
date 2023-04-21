@@ -1,7 +1,10 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
   <head>
     <title>&#x2756;  Rooftop Media &#x2756;</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicons/favicon-16x16.png">
@@ -9,83 +12,19 @@
     
     <link rel="stylesheet" href="/pages/index.css">
     <script src="/pages/index.js"></script>
-
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-    <meta content="utf-8" http-equiv="encoding">
-
   </head>
-
   <body>
-
     <div id="header">
-      <img id="logo" src="/assets/logo.png" alt="Rooftop Media's logo!" onclick="goto('/')" style="cursor:pointer;">
-      <div style="display: flex; display: none;" id="user-buttons">
-        <button onclick="goto('/misc/login')">Log in</button>
-        <button onclick="goto('/misc/register')">Register</button>
-        <button onclick="goto('/misc/admin')">Admin Page</button>
-      </div>
-    </div>  <!--  End of header div.      -->
-
-    <div id="page-content">
-      <div id="side-bar">
-        <div class="sidebar-section">Personal info<hr /></div>
-        <div class="sidebar-link" onclick="goto('/you/identity')" id="you-identity">Your identity</div>
-        <div class="sidebar-link" onclick="goto('/you/health')" id="you-health">Your health</div>
-        <div class="sidebar-link" onclick="goto('/you/job')" id="you-job">Your job</div>
-        <div class="sidebar-link" onclick="goto('/you/house')" id="you-house">Your house</div>
-        <div class="sidebar-link disabled" onclick="goto('/you/household')" id="you-household">Your household</div>
-        <div class="sidebar-link disabled" onclick="goto('/you/pets')" id="you-pets">Your pets</div>
-        <div class="sidebar-link disabled" onclick="goto('/you/property')" id="you-property">Your property</div>
-        <div class="sidebar-link disabled" onclick="goto('/you/settings')" id="you-settings">Your settings</div>
-        <br />
-        <div class="sidebar-section">Personal tools<hr /></div>
-        <div class="sidebar-link" onclick="goto('/tools/calendar')" id="tools-calendar">Calendar</div>
-        <div class="sidebar-link disabled" onclick="goto('/tools/email')" id="tools-email">Email</div>
-        <div class="sidebar-link disabled" onclick="goto('/tools/todo')" id="tools-todo">To do</div>
-        <div class="sidebar-link disabled" onclick="goto('/tools/public')" id="tools-public">Public page</div>
-        <br />
-        <div class="sidebar-section">Food<hr /></div>
-        <div class="sidebar-link disabled">Recipes</div>
-        <div class="sidebar-link disabled">Ingredientpedia</div>
-        <div class="sidebar-link disabled">Meal schedule</div>
-        <div class="sidebar-link disabled">Your inventory</div>
-        <br />
-        <div class="sidebar-section">About rooftop-media.org<hr /></div>
-        <div class="sidebar-link" onclick="goto('/about/basic-tools')" id="about-basic-tools">Basic tools</div>
-        <div class="sidebar-link" onclick="goto('/about/architecture')" id="about-architecture">Architecture</div>
-        <div class="sidebar-link" onclick="goto('/about/content')" id="about-content">Content</div>
-        <div class="sidebar-link disabled">Security</div>
-        <div class="sidebar-link disabled">Feedback</div>
-        <br />
-        <!--
-        <div class="sidebar-section">Fiction<hr /></div>
-        <div class="sidebar-link disabled">World building</div>
-        <div class="sidebar-link disabled">Script writing</div>
-        <div class="sidebar-link disabled">Media production</div>
-        <br />
-        <div class="sidebar-section">Non-fiction<hr /></div>
-        <div class="sidebar-link disabled">The human body</div>
-        <div class="sidebar-link disabled">Drugs & nutrition</div>
-        <div class="sidebar-link disabled">Human needs</div>
-        <div class="sidebar-link disabled">The economy</div>
-        <div class="sidebar-link disabled">The environment</div>
-        <div class="sidebar-link disabled">Technology</div>
-        <br />
-        <div class="sidebar-section">Missions<hr /></div>
-        <div class="sidebar-link disabled">Clean energy</div>
-        <div class="sidebar-link disabled">Socialism</div>
-        <div class="sidebar-link disabled">Landback</div>
-        <div class="sidebar-link disabled">Animal rights</div>
-        <div class="sidebar-link disabled">Post-scarcity</div>
-        <div class="sidebar-link disabled">Honesty in media</div>
-        <div class="sidebar-link disabled">Magic, immortality, & freewill</div>
-        -->
-      </div>
-      <div id="main-content">
-	      <!--  Insert page content here!  -->
+      <a href="/">
+        <img id="logo" src="/assets/logo.png" alt="Rooftop Media's logo!">
+      </a>
+      <div id="user-buttons">
+        <a href="/login">Log in</a>
+        <a href="/register">Register</a>
       </div>
     </div>
-
+    <div id="content">
+      <!--  Insert page content here!  -->
+    </div>
   </body>
-
 </html>

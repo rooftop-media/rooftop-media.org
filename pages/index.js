@@ -1,88 +1,62 @@
-//  Main website memory
+////  SECTION 1: Main website memory.
 var _current_page  = window.location.pathname;
 var _session_id = localStorage.getItem('session_id');
 var _current_user = null;
+var _show_user_menu = false;
+var _dark_mode = localStorage.getItem('dark_mode');
 
-//  Navigate to a different page.
-function goto(page) {
-  
-  //  Remove any added scripts from the current page...
-  console.log("Removing added scripts...");
-  let added_scripts = document.head.getElementsByClassName("added-script")
-  for (let i = 0; i < added_scripts.length; i++) {
-    console.log("Removing one script")
-    document.head.removeChild(added_scripts[i]);
-  }
+////  SECTION 2: Functions.
 
-  //  Changing the page's URL without triggering HTTP call...
-  window.history.pushState({page: "/"}, "Rooftop Media", page);
-  _current_page = page;
-  if (page == '/') {
-    page = '/misc/landing';
-  }
-
-  //  Now we'll do the HTTP call here, to keep the SPA frame...
+//  Log out
+function logout() {
   const http = new XMLHttpRequest();
-  http.open("GET", page + ".html");
-  http.send();
+  http.open("POST", "/api/logout");
+  http.send(_session_id);
   http.onreadystatechange = (e) => {
     if (http.readyState == 4 && http.status == 200) {
-      let page_book = JSON.parse(http.responseText);
-      document.getElementById('main-content').innerHTML = page_book.template;
-      //  Add the JS!
-      if (page_book.js) {
-        let page_script = document.createElement('script');
-        page_script.innerHTML = page_book.js;
-        page_script.classList.add("added-script");
-        document.head.appendChild(page_script);
-      }
-      //  Add the CSS!
-      if (page_book.css) {
-        let page_style = document.createElement('style');
-        page_style.innerHTML = page_book.css;
-        document.head.appendChild(page_style);
-      }
-      //eval(script_text);
+      localStorage.removeItem('session_id'); //  sets to null
+      window.location.href = '/login';
     }
   }
-
-  update_app_frame();
 }
 
-//  Update the sidebar & menu buttons on the app frame.
-function update_app_frame() {
-  //  Update the sidebar's selected link.
-  var selected_elements = document.getElementsByClassName('selected');
-  for (var i = 0; i < selected_elements.length; i++) {
-    selected_elements[i].classList.remove('selected');
-  }
-  var linkParts = _current_page.split('/');
-  var linkId = linkParts[1] + '-' + linkParts[2];
-  if (document.getElementById(linkId)) {
-    document.getElementById(linkId).classList.add('selected');
+function current_user_loaded() {}
+
+// Update the "user buttons" in the header
+function update_header() {
+  let userButtonsEl = document.getElementById('user-buttons');
+  let buttonText = `Menu`;
+  let menuHTML = `<div id="user-menu">`;
+
+  if (_current_user == null) {
+    menuHTML += `<a href="/register">Register</a>`;
+    menuHTML += `<a href="/login">Login</a>`;
+    menuHTML += `<button onclick="toggle_darkmode()"> &#x1F317; </button>`;
+  } else {
+    buttonText = _current_user.display_name;
+    menuHTML += `<a href="/profile">Your profile</a>`;
+    menuHTML += `<button onclick="toggle_darkmode()"> &#x1F317; </button>`;
+    menuHTML += `<button onclick="logout()">Log out</button>`;
   }
 
-  //  Hide the sidebar for pages without a side bar. 
-  if (linkParts[1] == 'misc' || _current_page == "/") {
-    document.getElementById('side-bar').style.display = "none";
-  } else {
-    document.getElementById('side-bar').style.display = "block";
+  userButtonsEl.innerHTML = `<button onclick="_show_user_menu = !_show_user_menu;update_header();">${buttonText}</button>`;
+  if (_show_user_menu) {
+    userButtonsEl.innerHTML += menuHTML + `</div>`;
   }
 
-  //  Update the user buttons.
-  if (_current_user && _current_user.username && _session_id) {
-    document.getElementById('user-buttons').innerHTML = `<button onclick="logout()">Log out</button>`;
-    document.getElementById('user-buttons').innerHTML += `<button onclick="goto('/you/identity')">${_current_user.username}</button>`;
-    document.getElementById('user-buttons').innerHTML += `<button onclick="goto('/misc/admin')">Admin Page</button>`;
-  } else {
-    document.getElementById('user-buttons').innerHTML = `<button onclick="goto('/misc/login')">Log in</button>`;
-    document.getElementById('user-buttons').innerHTML += `<button onclick="goto('/misc/register')">Register</button>`;
-    document.getElementById('user-buttons').innerHTML += `<button onclick="goto('/misc/admin')">Admin Page</button>`;
-  }
 }
 
-//  Boot the page.
+function toggle_darkmode() {
+  _dark_mode = _dark_mode != 'true' ? 'true' : false;
+  localStorage.setItem('dark_mode', _dark_mode);
+  document.getElementById('header').classList.toggle('dark');
+  document.getElementById('content').classList.toggle('dark');
+}
+
+////  SECTION 3: Boot.
 function boot() {
+  console.log("Welcome to Rooftop Media Dot Org!");
+
   //  Log user in if they have a session id. 
   if (_session_id) {
     const http = new XMLHttpRequest();
@@ -91,27 +65,28 @@ function boot() {
     http.onreadystatechange = (e) => {
       if (http.readyState == 4 && http.status == 200) {
         _current_user = JSON.parse(http.responseText);
-        update_app_frame()
+        current_user_loaded();
+      } else if (http.readyState == 4 && http.status == 404) {
+        console.log('No session found.');
+        localStorage.removeItem('session_id');
       }
+      update_header();
     }
+  } else {
+    update_header();
+  }
+
+  if (_dark_mode === 'true') {
+    _dark_mode = 'false';
+    toggle_darkmode();
   }
   
   //  Redirect away from register or login if we're logged in.
-  if ((_current_page == '/misc/register' || _current_page == '/misc/login') && _session_id != '') {
-    _current_page = '/you/identity';
+  if ((_current_page == '/register' || _current_page == '/login') && _session_id != null) {
+    window.location.href = '/';
   }
-
-  //  Go to the page. 
-  goto(_current_page);
+  
 }
 window.addEventListener('load', (event) => {
   boot()
 });
-
-//  Log out
-function logout() {
-  localStorage.setItem('session_id', '')
-  _session_id = null;
-  _current_user = null;
-  goto('/misc/login');
-}
