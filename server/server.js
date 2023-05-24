@@ -1,320 +1,343 @@
-//  Server script
-//  Run "node server.js" to host rooftop-media.org locally.
+////  SECTION 1: Imports.
 
-console.log("\x1b[32m >\x1b[0m Starting the rooftop server, at \x1b[36mlocalhost:8080\x1b[0m !");
+//  Importing NodeJS libraries.
+var http = require('http');     // listen to HTTP requests
+var path = require('path');     // manage filepath names
+var fs   = require('fs');       // access files on the server
+var crypto = require('crypto'); // encrypt user passwords
 
-//  Importing libraries
-var http = require('http');
-var path = require('path');
-var fs   = require('fs');
-const Cookbook = require('./cookbook.js');
+//  Importing our custom libraries
+const DataBase = require('./database/database.js');
+
+////  SECTION 2: Request response.
+
+//  This dictionary of media types (MIME types) will be used in the server func.
+var mimeTypes = {
+  '.html': 'text/html',
+  '.js': 'text/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.wav': 'audio/wav',
+  '.mp4': 'video/mp4',
+  '.woff': 'application/font-woff',
+  '.ttf': 'application/font-ttf',
+  '.eot': 'application/vnd.ms-fontobject',
+  '.otf': 'application/font-otf',
+  '.wasm': 'application/wasm'
+};
+
+//  Mapping URLs to pages
+var pageURLs = {
+  '/': '/pages/misc/landing.html',
+  '/landing': '/pages/misc/landing.html',
+  '/register': '/pages/misc/register.html',
+  '/login': '/pages/misc/login.html',
+  '/profile': '/pages/misc/profile.html'
+}
+var pageURLkeys = Object.keys(pageURLs);
 
 //  This function will fire upon every request to our server.
 function server_request(req, res) {
-	var url = req.url;
-	console.log(`\x1b[36m >\x1b[0m New ${req.method} request: \x1b[34m${url}\x1b[0m`);
-	var extname = String(path.extname(url)).toLowerCase();
-	
-	/*  Routes that start with 'api' are handled by the api_routes function, below.  */
-	if (extname.length == 0 && url.split('/')[1] == 'api') {
-		if (req.method == "GET") {
-			api_GET_routes(url, res);
-		} else if (req.method == "POST") {
-			api_POST_routes(url, req, res);
-		}
-		
-	
-	/*  Routes with no extension get index.html, the SPA frame.   */
-	} else if (extname.length == 0) {
-	
-			res.writeHead(200, {'Content-Type': 'text/html'});
-			var main_page = fs.readFileSync(__dirname + '/../pages/index.html');
-			res.write(main_page);
-			res.end();
+  var url = req.url;
+  console.log(`\x1b[36m >\x1b[0m New ${req.method} request: \x1b[34m${url}\x1b[0m`);
+  var extname = String(path.extname(url)).toLowerCase();
 
-			// if (url == "/") {  } else if (url == "/admin") { }
-	}
+  if (url.split('/')[1] == 'server') {  /*  Don't send anything from the /server/ folder.  */
+    respond_with_a_page(res, '/404');
+  } else if (extname.length == 0 && url.split('/')[1] == 'api') {     /*  API routes.      */
+    if (req.method == "GET") {
+      api_GET_routes(url, res);
+    } else if (req.method == "POST") {
+      api_POST_routes(url, req, res);
+    }
+  } else if (extname.length == 0) {            /*  No extension? Respond with index.html.  */
+    respond_with_a_page(res, url);
+  } else {    /*  Extension, like .png, .css, .js, etc? If found, respond with the asset.  */
+    respond_with_asset(res, url, extname);
+  }
 
-	/*  Getting a page for inside the SPA frame.                   */
-	else if (extname == ".html") {
-		let page_book = Cookbook.cook(url);
-		res.writeHead(200, {'Content-Type': 'text/html'});
-		res.write(JSON.stringify(page_book));
-		res.end();
-	}
+}
 
-	/*  We also might be pinged for a .png, or something. Handle that here.  */
-	else {
-		fs.readFile( __dirname + '/..' + url, function(error, content) {
-			if (error) {
-					if(error.code == 'ENOENT') {
-						fs.readFile('./404.html', function(error, content) {
-							res.writeHead(404, { 'Content-Type': 'text/html' });
-							res.end(content, 'utf-8');
-						});
-					}
-					else {
-				res.writeHead(500);
-				res.end('Sorry, check with the site admin for error: '+error.code+' ..\n');
-					}
-			} else {
-					var contentType = mimeTypes[extname] || 'application/octet-stream';
-					res.writeHead(200, { 'Content-Type': contentType });
-					res.end(content, 'utf-8');
-			}
-		});
-	}
+function respond_with_a_page(res, url) {
+  if (pageURLkeys.includes(url)) {
+    url = pageURLs[url];
+  }
+  fs.readFile( __dirname + '/..' + url, function(error, content) {
+    var content_page = "";
+    if (error) {
+      content_page = fs.readFileSync(__dirname + '/../pages/misc/404.html');
+    } else {
+      content_page = content;
+    }
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    var main_page = fs.readFileSync(__dirname + '/../pages/index.html', {encoding:'utf8'});
+    var page_halves = main_page.split('<!--  Insert page content here!  -->');
+    var rendered = page_halves[0] + content_page + page_halves[1];
+    res.write(rendered);
+    res.end();
+  });
+}
+
+function respond_with_asset(res, url, extname) {
+  fs.readFile( __dirname + '/..' + url, function(error, content) {
+    if (error) {
+        if(error.code == 'ENOENT') {
+          res.writeHead(404, { 'Content-Type': 'text/html' });
+          res.end('404 -- asset not found', 'utf-8');
+        }
+        else {
+      res.writeHead(500);
+      res.end('Sorry, check with the site admin for error: '+error.code+' ..\n');
+        }
+    } else {
+        var contentType = mimeTypes[extname] || 'application/octet-stream';
+        res.writeHead(200, { 'Content-Type': contentType });
+        res.end(content, 'utf-8');
+    }
+  });
+}
+
+////  SECTION 3: API.
+
+function api_GET_routes(url, res) {
 
 }
 
 
+function api_POST_routes(url, req, res) {
+  let req_data = '';
+  req.on('data', chunk => {
+    req_data += chunk;
+  })
+  req.on('end', function() {
+    req_data = JSON.parse(req_data);
+
+    let api_map = {
+      '/api/register': POST_register,
+      '/api/login': POST_login,
+      '/api/logout': POST_logout,
+      '/api/user-by-session': POST_user_by_session,
+      '/api/update-user': POST_update_user,
+      '/api/update-password': POST_update_password,
+      '/api/check-invite-code': POST_check_invite_code
+    }
+    
+    //  Calling the API route's function
+    api_map[url](req_data, res);
+  })
+}
+
+function POST_register(new_user, res) {
+  let user_data = fs.readFileSync(__dirname + '/database/table_rows/users.json', 'utf8');
+  user_data = JSON.parse(user_data);
+  let response = {
+    error: false,
+    msg: '',
+    session_id: ''
+  }
+  for (let i = 0; i < user_data.length; i++) {
+    if (user_data[i].username == new_user.username) {
+      response.error = true;
+      response.msg = 'Username already taken.';
+      break;
+    } else if (user_data[i].email == new_user.email) {
+      response.error = true;
+      response.msg = 'Email already taken.';
+      break;
+    } else if (user_data[i].phone == new_user.phone) {
+      response.error = true;
+      response.msg = 'Phone number already taken.';
+      break;
+    }
+  }
+  if (new_user.invite_code != 'secret123') {
+    response.error = true;
+    response.msg = 'Incorrect invite code!';
+  }
+
+  //  If it's not a duplicate, encrypt the pass, and save it. 
+  if (!response.error) {
+    new_user.salt = crypto.randomBytes(16).toString('hex');
+    new_user.password = crypto.pbkdf2Sync(new_user.password, new_user.salt, 1000, 64, `sha512`).toString(`hex`);
+    //  Add the user to the db.
+    let user_id = DataBase.table('users').insert(new_user);
+    //  Add a session to the db.
+    let expire_date = new Date()
+    expire_date.setDate(expire_date.getDate() + 30);
+    response.session_id = DataBase.table('sessions').insert({
+      user_id: user_id,
+      expires: expire_date
+    })
+  }
+  res.writeHead(200, {'Content-Type': 'text/html'});
+  res.write(JSON.stringify(response));
+  res.end();
+}
+
+function POST_login(login_info, res) {
+  res.writeHead(200, {'Content-Type': 'text/html'});
+  let user_data = DataBase.table('users').find({ username: login_info.username });
+  let response = {
+    error: false,
+    msg: '',
+    user_data: '',
+    session_id: ''
+  }
+  if (user_data.length < 1) {
+    response.error = true;
+    response.msg = 'No user found.';
+    res.write(JSON.stringify(response));
+    res.end();
+    return;
+  }
+  let password = crypto.pbkdf2Sync(login_info.password, user_data[0].salt, 1000, 64, `sha512`).toString(`hex`);
+  if (password != user_data[0].password) {
+    response.error = true;
+    response.msg = 'Incorrect password.';
+  } else {
+    response.user_data = user_data[0];
+    let expire_date = new Date()
+    expire_date.setDate(expire_date.getDate() + 30);
+    response.session_id = DataBase.table('sessions').insert({
+      user_id: user_data[0].id,
+      expires: expire_date
+    })
+  }
+  res.write(JSON.stringify(response));
+  res.end();
+}
+
+function POST_logout(session_id, res) {
+  let success_msg = DataBase.table('sessions').delete(session_id);
+  res.writeHead(200, {'Content-Type': 'text/html'});
+  res.write(success_msg);
+  res.end();
+}
+
+function POST_user_by_session(session_id, res) {
+  let session_data = DataBase.table('sessions').find({ id: session_id });
+  if (session_data.length < 1) {
+    res.writeHead(404, {'Content-Type': 'text/html'});
+    res.write("No session found.");
+    res.end();
+    return;
+  }
+  let user_data = DataBase.table('users').find({ id: session_data[0].user_id });
+  if (user_data.length < 1) {
+    res.writeHead(404, {'Content-Type': 'text/html'});
+    res.write(`No user found for session ${session_data[0].id}.`);
+    res.end();
+  } else {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.write(JSON.stringify(user_data[0]));
+    res.end();
+  }
+}
+
+function POST_update_user(user_update, res) {
+  res.writeHead(200, {'Content-Type': 'text/html'});
+
+  //  Make sure the username, email, and phone are unique. 
+  let user_data = fs.readFileSync(__dirname + '/database/table_rows/users.json', 'utf8');
+  user_data = JSON.parse(user_data);
+  let response = {
+    error: false,
+    msg: '',
+    updated_user: ''
+  }
+  for (let i = 0; i < user_data.length; i++) {
+    if (user_data[i].id != user_update.id) {
+      if (user_data[i].username == user_update.username) {
+        response.error = true;
+        response.msg = 'Username already taken.';
+        break;
+      } else if (user_data[i].email == user_update.email) {
+        response.error = true;
+        response.msg = 'Email already taken.';
+        break;
+      } else if (user_data[i].phone == user_update.phone) {
+        response.error = true;
+        response.msg = 'Phone number already taken.';
+        break;
+      }
+    }
+  }
+
+  //  If the update is valid, save it.
+  if (!response.error) {
+    response.updated_user = DataBase.table('users').update(user_update.id, user_update);
+    if (response.updated_user == null) {
+      response.error = true;
+      response.msg = `No user found for ${user_update.id}.`
+    }
+  }
+
+  res.write(JSON.stringify(response));
+  res.end();
+}
+
+function POST_update_password(password_update, res) {
+  res.writeHead(200, {'Content-Type': 'text/html'});
+
+  let user_data = DataBase.table('users').find({ id: password_update.id });
+  let response = {
+    error: false,
+    msg: '',
+  }
+  if (user_data.length < 1) {
+    response.error = true;
+    response.msg = 'No user found.';
+    res.write(JSON.stringify(response));
+    res.end();
+    return;
+  }
+  let password = crypto.pbkdf2Sync(password_update.old_password, user_data[0].salt, 1000, 64, `sha512`).toString(`hex`);
+  let new_pass = '';
+  if (password != user_data[0].password) {
+    response.error = true;
+    response.msg = 'Incorrect password.';
+  } else {
+    new_pass = crypto.pbkdf2Sync(password_update.new_password, user_data[0].salt, 1000, 64, `sha512`).toString(`hex`);
+  }
+
+  if (!response.error) {
+    response.updated_user = DataBase.table('users').update(password_update.id, {password: new_pass});
+    if (response.updated_user == null) {
+      response.error = true;
+      response.msg = `No user found for session ${password_update.id}.`
+    }
+  }
+
+  res.write(JSON.stringify(response));
+  res.end();
+}
+
+function POST_check_invite_code(data, res) {
+  res.writeHead(200, {'Content-Type': 'text/html'});
+  if (data.invite_code == 'secret123') {
+    res.write(JSON.stringify({error: false}));
+  } else {
+    res.write(JSON.stringify({error: true, msg: "incorrect code"}));
+  }
+  res.end();
+}
+
+////  SECTION 4: Boot.
+
+console.log("\x1b[32m >\x1b[0m Starting the rooftop server, at \x1b[36mlocalhost:8080\x1b[0m !");
+
 //  Creating the server!
 var server = http.createServer(
-	server_request
+  server_request
 );
 server.on('close', () => {
-	console.log("\x1b[31m >\x1b[0m Shutting down server. Bye!")
+  console.log("\x1b[31m >\x1b[0m Shutting down server. Bye!")
 })
 process.on('SIGINT', function() {
   server.close();
 });
 server.listen(8080);
-
-
-//  This dictionary is used in the setup function above. 
-var mimeTypes = {
-    '.html': 'text/html',
-    '.js': 'text/javascript',
-    '.css': 'text/css',
-    '.json': 'application/json',
-    '.png': 'image/png',
-    '.jpg': 'image/jpg',
-    '.gif': 'image/gif',
-    '.svg': 'image/svg+xml',
-    '.wav': 'audio/wav',
-    '.mp4': 'video/mp4',
-    '.woff': 'application/font-woff',
-    '.ttf': 'application/font-ttf',
-    '.eot': 'application/vnd.ms-fontobject',
-    '.otf': 'application/font-otf',
-    '.wasm': 'application/wasm'
-};
-
-
-////
-////  API section
-////
-const DataBase = require('./database/database.js');
-var crypto = require('crypto');
-
-//  This function fires when an /api/ route is requested with the GET method. 
-function api_GET_routes(api_route, res) {
-
-	if (api_route == "/api/get-tables") {
-		let all_tables = DataBase.all_tables();
-		res.writeHead(200, {'Content-Type': 'text/html'});
-		res.write(JSON.stringify(all_tables));
-		res.end();
-	}
-	else if (api_route == "/api/users-table") {
-		let user_table = DataBase.table('users');
-		res.writeHead(200, {'Content-Type': 'text/html'});
-		res.write(JSON.stringify(user_table));
-		res.end();
-	}
-	else if (api_route == "/api/sessions-table") {
-		let sessions_table = DataBase.table('sessions');
-		res.writeHead(200, {'Content-Type': 'text/html'});
-		res.write(JSON.stringify(sessions_table));
-		res.end();
-	}
-	else if (api_route == "/api/user_jobs-table") {
-		let user_jobs_table = DataBase.table('user_jobs');
-		res.writeHead(200, {'Content-Type': 'text/html'});
-		res.write(JSON.stringify(user_jobs_table));
-		res.end();
-	}
-	else if (api_route == "/api/user_health-table") {
-		let user_health_table = DataBase.table('user_health');
-		res.writeHead(200, {'Content-Type': 'text/html'});
-		res.write(JSON.stringify(user_health_table));
-		res.end();
-	}
-	
-}
-
-//  HTTP calls with /api/ routes and a POST method. 
-function api_POST_routes(api_route, req, res) {
-	let req_data = '';
-  req.on('data', chunk => {
-    req_data += chunk;
-  })
-  req.on('end', () => {
-    
-		if (api_route == "/api/register") {
-			//  Make sure the user submitted doesn't have duplicate info...
-			req_data = JSON.parse(req_data);
-			let user_data = fs.readFileSync(__dirname + '/database/table_rows/users.json', 'utf8')
-			user_data = JSON.parse(user_data);
-			let response = {
-				error: false,
-				msg: '',
-				session_id: ''
-			}
-			for (let i = 0; i < user_data.length; i++) {
-				if (user_data[i].username == req_data.username) {
-					response.error = true;
-					response.msg = 'Username already taken.';
-				} else if (user_data[i].email == req_data.email) {
-					response.error = true;
-					response.msg = 'Email already taken.';
-				} else if (user_data[i].phone == req_data.phone) {
-					response.error = true;
-					response.msg = 'Phone number already taken.';
-				}
-			}
-			//  If it's not a duplicate, encrypt the pass, and save it. 
-			if (!response.error) {
-				req_data.salt = crypto.randomBytes(16).toString('hex');
-				req_data.password = crypto.pbkdf2Sync(req_data.password, req_data.salt, 1000, 64, `sha512`).toString(`hex`);
-				//  Add the user to the db.
-				let user_id = DataBase.table('users').insert(req_data);
-				//  Add a session to the db.
-				let expire_date = new Date()
-				expire_date.setDate(expire_date.getDate() + 30);
-				response.session_id = DataBase.table('sessions').insert({
-					user_id: user_id,
-					expires: expire_date
-				})
-			}
-			res.writeHead(200, {'Content-Type': 'text/html'});
-			res.write(JSON.stringify(response));
-			res.end();
-		} 
-
-		//  Log user in.
-		else if (api_route == "/api/login") {
-			res.writeHead(200, {'Content-Type': 'text/html'});
-			req_data = JSON.parse(req_data);
-			let user_data = DataBase.table('users').find({ username: req_data.username });
-			let response = {
-				error: false,
-				msg: '',
-				user_data: '',
-				session_id: ''
-			}
-			if (user_data.length < 1) {
-				response.error = true;
-				response.msg = 'No user found.';
-				res.write(JSON.stringify(response));
-				res.end();
-				return;
-			}
-			let password = crypto.pbkdf2Sync(req_data.password, user_data[0].salt, 1000, 64, `sha512`).toString(`hex`);
-			if (password != user_data[0].password) {
-				response.error = true;
-				response.msg = 'Incorrect password.';
-			} else {
-				response.user_data = user_data[0];
-				let expire_date = new Date()
-				expire_date.setDate(expire_date.getDate() + 30);
-				response.session_id = DataBase.table('sessions').insert({
-					user_id: user_data[0].id,
-					expires: expire_date
-				})
-			}
-			res.write(JSON.stringify(response));
-			res.end();
-		}
-
-		//  Get user by user session. (Yes this is a POST)
-		else if (api_route == "/api/user-by-session") {
-			res.writeHead(200, {'Content-Type': 'text/html'});
-			let session_data = DataBase.table('sessions').find({ id: req_data });
-			if (session_data.length < 1) {
-				res.write("No session found.");
-				res.end();
-				return;
-			}
-			let user_data = DataBase.table('users').find({ id: session_data[0].user_id });
-			if (user_data.length < 1) {
-				res.write(`No user found for session ${session_data[0].id}.`);
-				res.end();
-			} else {
-				res.write(JSON.stringify(user_data[0]));
-				res.end();
-			}
-		}
-
-		//  Update user job info.
-		else if (api_route == "/api/update-user-job") {
-			res.writeHead(200, {'Content-Type': 'text/html'});
-			req_data = JSON.parse(req_data);
-			DataBase.table('user_jobs').add_or_update(
-				{ user_id: req_data.user_id },
-				req_data
-			);
-		}
-		//  Get job info by user ID
-		else if (api_route == "/api/user-job-by-user") {
-			res.writeHead(200, {'Content-Type': 'text/html'});
-			let user_job_data = DataBase.table('user_jobs').find({ user_id: req_data });
-			if (user_job_data.length < 1) {
-				console.log('{error: no job found}')
-				res.write("{error: no job found}");
-				res.end();
-				return;
-			}
-			res.write(JSON.stringify(user_job_data[0]));
-			res.end();
-		}
-
-		//  Update user house info.
-		else if (api_route == "/api/update-user-house") {
-			res.writeHead(200, {'Content-Type': 'text/html'});
-			req_data = JSON.parse(req_data);
-			DataBase.table('user_houses').add_or_update(
-				{ user_id: req_data.user_id },
-				req_data
-			);
-		}
-		//  Get house info by user ID
-		else if (api_route == "/api/user-house-by-user") {
-			res.writeHead(200, {'Content-Type': 'text/html'});
-			let user_house_data = DataBase.table('user_houses').find({ user_id: req_data });
-			if (user_house_data.length < 1) {
-				console.log('{error: no house found}')
-				res.write("{error: no house found}");
-				res.end();
-				return;
-			}
-			res.write(JSON.stringify(user_house_data[0]));
-			res.end();
-		}
-
-		//  Update user health info.
-		else if (api_route == "/api/update-user-health") {
-			res.writeHead(200, {'Content-Type': 'text/html'});
-			req_data = JSON.parse(req_data);
-			DataBase.table('user_health').add_or_update(
-				{ user_id: req_data.user_id },
-				req_data
-			);
-		}
-		//  Get health info by user ID
-		else if (api_route == "/api/user-health-by-user") {
-			res.writeHead(200, {'Content-Type': 'text/html'});
-			let user_health_data = DataBase.table('user_health').find({ user_id: req_data });
-			if (user_health_data.length < 1) {
-				console.log('{error: no health found}')
-				res.write("{error: no health found}");
-				res.end();
-				return;
-			}
-			res.write(JSON.stringify(user_health_data[0]));
-			res.end();
-		}
-
-  })
-	
-}
