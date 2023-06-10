@@ -176,6 +176,11 @@ function GET_user_by_session(req_data, res) {
 
 function GET_all_pages(req_data, res) {
   let all_pages = fs.readFileSync(__dirname + '/database/table_rows/pages.json', 'utf8');
+  all_pages = JSON.parse(all_pages);
+  for (let i = 0; i < all_pages.length; i++) {
+    let owner_id = parseInt(all_pages[i].created_by);
+    all_pages[i].owner = DataBase.table('users').find({id: owner_id})[0].username;
+  }
   api_response(res, 200, JSON.stringify(all_pages));
 }
 
@@ -213,9 +218,11 @@ function api_POST_routes(url, req, res) {
       '/api/logout': POST_logout,
       '/api/update-user': POST_update_user,
       '/api/update-password': POST_update_password,
+      '/api/delete-user': POST_delete_user,
       '/api/check-invite-code': POST_check_invite_code,
       '/api/create-page': POST_create_page,
-      '/api/update-page': POST_update_page
+      '/api/update-page': POST_update_page,
+      '/api/delete-page': POST_delete_page
     }
     
     //  Call the API route function, if it exists.
@@ -228,45 +235,26 @@ function api_POST_routes(url, req, res) {
 }
 
 function POST_register(new_user, res) {
-  let user_data = fs.readFileSync(__dirname + '/database/table_rows/users.json', 'utf8');
-  user_data = JSON.parse(user_data);
-  let response = {
-    error: false,
-    msg: '',
-    session_id: ''
-  }
-  for (let i = 0; i < user_data.length; i++) {
-    if (user_data[i].username == new_user.username) {
-      response.error = true;
-      response.msg = 'Username already taken.';
-      break;
-    } else if (user_data[i].email == new_user.email) {
-      response.error = true;
-      response.msg = 'Email already taken.';
-      break;
-    } else if (user_data[i].phone == new_user.phone) {
-      response.error = true;
-      response.msg = 'Phone number already taken.';
-      break;
-    }
-  }
+  new_user.salt = crypto.randomBytes(16).toString('hex');
+  new_user.password = crypto.pbkdf2Sync(new_user.password, new_user.salt, 1000, 64, `sha512`).toString(`hex`);
+  //  Add the user to the db.
+  let response = DataBase.table('users').insert(new_user);
+  
   if (new_user.invite_code != 'secret123') {
     response.error = true;
     response.msg = 'Incorrect invite code!';
   }
-  //  If it's not a duplicate, encrypt the pass, and save it. 
+  
   if (!response.error) {
-    new_user.salt = crypto.randomBytes(16).toString('hex');
-    new_user.password = crypto.pbkdf2Sync(new_user.password, new_user.salt, 1000, 64, `sha512`).toString(`hex`);
-    //  Add the user to the db.
-    let user_id = DataBase.table('users').insert(new_user);
     //  Add a session to the db.
     let expire_date = new Date()
     expire_date.setDate(expire_date.getDate() + 30);
-    response.session_id = DataBase.table('sessions').insert({
-      user_id: user_id,
+    let new_session_response = DataBase.table('sessions').insert({
+      user_id: response.id,
       expires: expire_date
     })
+    response.error = new_session_response.error;
+    response.session_id = new_session_response.id;
   }
   api_response(res, 200, JSON.stringify(response));
 }
@@ -292,10 +280,12 @@ function POST_login(login_info, res) {
     response.user_data = user_data[0];
     let expire_date = new Date()
     expire_date.setDate(expire_date.getDate() + 30);
-    response.session_id = DataBase.table('sessions').insert({
+    let session_data = DataBase.table('sessions').insert({
       user_id: user_data[0].id,
       expires: expire_date
     })
+    response.error = session_data.error;
+    response.session_id = session_data.id;
   }
   api_response(res, 200, JSON.stringify(response));
 }
@@ -306,42 +296,7 @@ function POST_logout(session_id, res) {
 }
 
 function POST_update_user(user_update, res) {
-
-  //  Make sure the username, email, and phone are unique. 
-  let user_data = fs.readFileSync(__dirname + '/database/table_rows/users.json', 'utf8');
-  user_data = JSON.parse(user_data);
-  let response = {
-    error: false,
-    msg: '',
-    updated_user: ''
-  }
-  for (let i = 0; i < user_data.length; i++) {
-    if (user_data[i].id != user_update.id) {
-      if (user_data[i].username == user_update.username) {
-        response.error = true;
-        response.msg = 'Username already taken.';
-        break;
-      } else if (user_data[i].email == user_update.email) {
-        response.error = true;
-        response.msg = 'Email already taken.';
-        break;
-      } else if (user_data[i].phone == user_update.phone) {
-        response.error = true;
-        response.msg = 'Phone number already taken.';
-        break;
-      }
-    }
-  }
-
-  //  If the update is valid, save it.
-  if (!response.error) {
-    response.updated_user = DataBase.table('users').update(user_update.id, user_update);
-    if (response.updated_user == null) {
-      response.error = true;
-      response.msg = `No user found for ${user_update.id}.`
-    }
-  }
-
+  let response = DataBase.table('users').update(user_update.id, user_update);
   api_response(res, 200, JSON.stringify(response));
 }
 
@@ -376,6 +331,28 @@ function POST_update_password(password_update, res) {
   api_response(res, 200, JSON.stringify(response));
 }
 
+function POST_delete_user(user_info, res) {
+  let user_data = DataBase.table('users').find({ id: user_info.id });
+  let response = {
+    error: false,
+    msg: '',
+  }
+  if (user_data.length < 1) {
+    response.error = true;
+    response.msg = 'No user found.';
+    return api_response(res, 200, JSON.stringify(response));
+  }
+  let password = crypto.pbkdf2Sync(user_info.password, user_data[0].salt, 1000, 64, `sha512`).toString(`hex`);
+  if (password != user_data[0].password) {
+    response.error = true;
+    response.msg = 'Incorrect password.';
+  } else {
+    response.msg = DataBase.table('users').delete(user_info.id);
+  }
+
+  api_response(res, 200, JSON.stringify(response));
+}
+
 function POST_check_invite_code(data, res) {
   if (data.invite_code == 'secret123') {
     api_response(res, 200, JSON.stringify({error: false}));
@@ -385,51 +362,42 @@ function POST_check_invite_code(data, res) {
 }
 
 function POST_create_page(new_page_data, res) {
-  let page_data = fs.readFileSync(__dirname + '/database/table_rows/pages.json', 'utf8');
-  page_data = JSON.parse(page_data);
-  let response = {
-    error: false,
-    msg: '',
-  }
-  for (let i = 0; i < page_data.length; i++) {
-    if (page_data[i].page_route == new_page_data.page_route) {
-      response.error = true;
-      response.msg = 'Route name already taken.';
-      break;
-    } 
-  }
-  //  If it's a valid page, save it
-  if (!response.error) {
-    DataBase.table('pages').insert(new_page_data);
-  }
+  let response = DataBase.table('pages').insert(new_page_data);
   api_response(res, 200, JSON.stringify(response));
 }
 
-function POST_update_page(page_update, res) {  
-  let response = {
-    error: false,
-    msg: '',
-    updated_page: ''
-  }
-
-  //  Make sure the current user created the current page
+function POST_update_page(page_update, res) {
+  let response = { error: false };
   let page_data = DataBase.table('pages').find({ id: page_update.id });
   let session_data = DataBase.table('sessions').find({ id: page_update.session_id });
   if (page_data[0].created_by != session_data[0].user_id) {
     response.error = true;
     response.msg = `You don't have permission to update this page.`;
   }
-
-  //  If the update is valid, save it.
   if (!response.error) {
-    response.updated_page = DataBase.table('pages').update(page_update.id, page_update);
-    if (response.updated_page == null) {
-      response.error = true;
-      response.msg = `No page found for ${page_update.id}.`
-    }
+    response = DataBase.table('pages').update(page_update.id, page_update);
   }
-
   api_response(res, 200, JSON.stringify(response));
+}
+
+function POST_delete_page(request_info, res) {
+  let page_data = DataBase.table('pages').find({ id: request_info.id });
+  let session_data = DataBase.table('sessions').find({ id: request_info.session_id });
+  let response = {
+    error: false,
+    msg: '',
+  }
+  
+  if (page_data.length < 1) {
+    response.error = true;
+    response.msg = 'No page found.';
+  } else if  (page_data[0].created_by != session_data[0].user_id) {
+    response.error = true;
+    response.msg = `You don't have permission to delete this page.`;
+  } else {
+    response.msg = DataBase.table('pages').delete(request_info.id);
+  }
+  return api_response(res, 200, JSON.stringify(response));
 }
 
 ////  SECTION 4: Boot.
