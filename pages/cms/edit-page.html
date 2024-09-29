@@ -33,7 +33,7 @@
 <script>
 
 ////  SECTION 1: Page memory
-let page_route = _current_page.split('/edit/')[1];
+let page_route = _current_page.slice(6, _current_page.length);
 let buffer_data = {};
 let page_data = {};
 let is_saved = true;
@@ -65,7 +65,8 @@ function back_to_editor() {
 
 function create_highlighting(markup_text) {
   let tokens = markup_to_tokens(markup_text);
-  let parsed = tokens_to_parse(tokens);
+  let pre_parsed = tokens_to_parse(tokens);
+  let parsed = parse_code_tags(pre_parsed);
   let colors = {
     'LESS-THAN': 'var(--yellow)',
     'GREATER-THAN': 'var(--yellow)',
@@ -78,6 +79,10 @@ function create_highlighting(markup_text) {
     'DOUBLE-QUOTE': '#86C3FD',
     'SINGLE-QUOTE': '#86C3FD',
     'TEXT': 'white',
+    'COMMENT': 'gray',
+    'DASH': 'gray',
+    'EXCLAMATION': 'gray',
+    'CODE-TAG-TEXT': 'gray',
     'INVALID': 'white'
   }
   let highlighted = '';
@@ -87,10 +92,14 @@ function create_highlighting(markup_text) {
          .replace(/>/g, "&gt;")
          .replace(/"/g, "&quot;")
          .replace(/'/g, "&#39;");
+
     highlighted += parsed[i].type == 'INVALID' ? '<span style="text-decoration:underline;text-decoration-color:red;">' : '';
     highlighted += `<span style="color:${colors[parsed[i].type]};">${escaped_text}</span>`;
     highlighted += parsed[i].type == 'INVALID' ? '</span>' : '';
 
+  }
+  if(buffer_data.content[buffer_data.content.length - 1] == "\n") {     // Fixing "last newline" error -- see css-tricks article
+    highlighted += " ";  
   }
   return highlighted;
 }
@@ -160,7 +169,8 @@ function save() {
     title: buffer_data.title,
     content: buffer_data.content,
     route: buffer_data.route,
-    is_public: buffer_data.is_public
+    is_public: buffer_data.is_public,
+    session_id: _session_id
   }));
   http.onreadystatechange = (e) => {
     let response;      
@@ -199,7 +209,8 @@ function delete_page() {
   const http = new XMLHttpRequest();
   http.open('POST', '/api/delete-page');
   http.send(JSON.stringify({ 
-    id: page_data.id
+    id: page_data.id,
+    session_id: _session_id
   }));
   http.onreadystatechange = (e) => {
     if (http.readyState == 4 && http.status == 200) {
@@ -208,7 +219,7 @@ function delete_page() {
         document.getElementById('error').innerHTML = "Page deleted.  Redirecting you...";
         window.location.href = '/';
       } else {
-        console.warn("Err")
+        console.warn(response.msg);
         document.getElementById('error').innerHTML = response.msg;
       }
     }
@@ -219,7 +230,7 @@ function delete_page() {
 //  Load all page elements from API, then render buffer
 function load_page() {
   const http = new XMLHttpRequest();
-  http.open('GET', `/api/page?route=${page_route}`);
+  http.open('GET', `/api/page?route=${page_route}&session_id=${_session_id}`);
   http.send();
   console.log('Requesting page')
   http.onreadystatechange = (e) => {
@@ -231,6 +242,10 @@ function load_page() {
       if (!response.error) {
         console.log("Response recieved! Loading page.");
         page_data = response.data;
+        if (page_data.created_by != _current_user.id) {
+          document.getElementById('dynamic-page').innerHTML = "You don't have permission to edit this page.";
+          return;
+        }
         buffer_data.content = page_data.content || "";
         buffer_data.title = page_data.title || "";
         buffer_data.route = page_data.route;
@@ -242,9 +257,9 @@ function load_page() {
     }
   }
 }
-window.addEventListener('load', (event) => {
+current_user_loaded = function() {
   load_page();
-});
+}
 
 </script>
 
@@ -282,6 +297,7 @@ window.addEventListener('load', (event) => {
     padding: 5px;
     box-sizing: border-box;
     overflow-y: scroll;
+    
   }
   #page-buffer {
     position: absolute;

@@ -37,9 +37,11 @@ var pageURLs = {
   '/register': '/pages/misc/register.html',
   '/login': '/pages/misc/login.html',
   '/profile': '/pages/misc/profile.html',
-  '/create-page': '/pages/cms/create-page.html',
-  '/all-pages': '/pages/cms/all-pages.html',
-  '/markup-rules': '/pages/cms/markup-rules.html'
+  '/new-page': '/pages/cms/new-page.html',
+  '/pages': '/pages/cms/pages.html',
+  '/markup-rules': '/pages/cms/markup-rules.html',
+  '/upload-file': '/pages/cms/upload-file.html',
+  '/files': '/pages/cms/files.html'
 }
 var pageURLkeys = Object.keys(pageURLs);
 
@@ -52,11 +54,7 @@ function server_request(req, res) {
   if (url.split('/')[1] == 'server') {  /*  Don't send anything from the /server/ folder.  */
     respond_with_a_page(res, '/404');
   } else if (extname.length == 0 && url.split('/')[1] == 'api') {     /*  API routes.      */
-    if (req.method == "GET") {
-      api_GET_routes(url, res);
-    } else if (req.method == "POST") {
-      api_POST_routes(url, req, res);
-    }
+    api_routes(url, req, res)
   } else if (extname.length == 0) {            /*  No extension? Respond with index.html.  */
     respond_with_a_page(res, url);
   } else {    /*  Extension, like .png, .css, .js, etc? If found, respond with the asset.  */
@@ -93,7 +91,6 @@ function respond_with_a_page(res, url) {
   res.end();
 }
 
-
 function respond_with_asset(res, url, extname) {
   fs.readFile( __dirname + '/..' + url, function(error, content) {
     if (error) {
@@ -115,44 +112,86 @@ function respond_with_asset(res, url, extname) {
 
 ////  SECTION 3: API.
 
+let GET_routes = {};  //  Stores all GET route methods!
+let POST_routes = {}; //  Stores all POST route methods!
+
+//  Responds to HTTP requests. "code" might be 404, 200, etc. 
 function api_response(res, code, text) {
   res.writeHead(code, {'Content-Type': 'text/html'});
   res.write(text);
   return res.end();
 }
 
-function api_GET_routes(url, res) {
-  //  Get data, for example /api/users?userid=22&username=ben
-  let req_data = {};
-  if (url.indexOf('?') != -1) {
-    let params = url.split('?')[1];
-    url = url.split('?')[0];
-    params = params.split('&');
-    for (let i = 0; i < params.length; i++) {
-      let parts = params[i].split('=');
-      if (parts.length != 2) {
-        return api_response(res, 400, `Improper data in your request.`);
-      }
-      req_data[parts[0]] = parts[1];
+//  Parses the data sent with a request
+function parse_req_data(req_data) {
+  try {
+    let parsed_req_data = JSON.parse(req_data);
+    if (typeof parsed_req_data === 'object' && !Array.isArray(parsed_req_data) && parsed_req_data !== null) {
+      return parsed_req_data;
+    } else {
+      return { body: req_data };
     }
-  }
-  
-  let api_map = {
-    '/api/user-by-session': GET_user_by_session,
-    '/api/page': GET_page,
-    '/api/all-pages': GET_all_pages,
-  }
-
-  //  Call the API route function, if it exists.
-  if (typeof api_map[url] == 'function') {
-    api_map[url](req_data, res);
-  } else {
-    api_response(res, 404, `The GET API route ${url} does not exist.`);
+  } catch (e) {
+    return { body: req_data };
   }
 }
 
-function GET_user_by_session(req_data, res) {
-  let session_data = DataBase.table('sessions').find({ id: parseInt(req_data.session_id) });
+//  Parse URL params for example /api/users?userid=22&username=ben
+function parse_url_params(url, res) {
+  let params = { _url: url };
+  if (url.indexOf('?') != -1) {
+    let param_string = url.split('?')[1];
+    let param_pairs = param_string.split('&');
+    for (let i = 0; i < param_pairs.length; i++) {
+      let parts = param_pairs[i].split('=');
+      if (parts.length != 2) {
+        return api_response(res, 400, `Improper URL parameters.`);
+      }
+      params[parts[0]] = parts[1];
+    }
+    params._url = url.split('?')[0];
+  }
+  return params;
+}
+
+//  This is called in server_request for any req starting with /api/.  It uses the functions above and calls the functions below.
+function api_routes(url, req, res) {
+
+  let req_data = '';
+  let buffer_chunks = [];
+  req.on('data', chunk => {
+    if (req.headers['content-type'] != 'application/octet-stream') {
+      req_data += chunk;
+    } else {
+      buffer_chunks.push(chunk);
+    }
+  })
+  req.on('end', function() {    
+
+    //  Parse the data to JSON.
+    if (req.headers['content-type'] != 'application/octet-stream') {
+      req_data = parse_req_data(req_data, res);
+    } else {
+      req_data = { body: Buffer.concat(buffer_chunks) };
+    }
+
+    //  Get data, for example /api/users?userid=22&username=ben
+    req_data._params = parse_url_params(url);
+    url = req_data._params._url;
+
+    if (req.method == "GET" && typeof GET_routes[url] == 'function') {
+      GET_routes[url](req_data._params, res);
+    } else if (req.method == "POST" && typeof POST_routes[url] == 'function') {
+      POST_routes[url](req_data, res);
+    } else {
+      api_response(res, 404, `The ${req.method} API route ${url} does not exist.`);
+    }
+
+  })
+}
+
+GET_routes['/api/user-by-session'] = function(params, res) {
+  let session_data = DataBase.table('sessions').find({ id: parseInt(params.session_id) });
   if (session_data.length < 1) {
     return api_response(res, 404, 'No session found');
   }
@@ -164,22 +203,24 @@ function GET_user_by_session(req_data, res) {
   }
 }
 
-function GET_page(req_data, res) {
+GET_routes['/api/page'] = function(req_data, res) {
+  let response = { error: false };
   let page_data = DataBase.table('pages').find({ route: req_data.route });
-  let response = {
-    error: false,
-    data: null
-  }
+  let session_data = DataBase.table('sessions').find({ id: req_data.session_id });
   if (page_data.length < 1) {
     response.error = true;
     response.msg = `The page ${req_data.route} was not found.`;
-  } else {
+  } else if (page_data[0].is_public || (session_data.length > 0 && page_data[0].created_by == session_data[0].user_id)) {
     response.data =  page_data[0];
-  }
+  } else {
+    response.error = true;
+    response.msg = `You don't have permission to view this page.`;
+  } 
   api_response(res, 200, JSON.stringify(response));
 }
 
-function GET_all_pages(req_data, res) {
+
+GET_routes['/api/all-pages'] = function(req_data, res) {
   let all_pages = fs.readFileSync(__dirname + '/database/table_rows/pages.json', 'utf8');
   all_pages = JSON.parse(all_pages);
   for (let i = 0; i < all_pages.length; i++) {
@@ -189,42 +230,17 @@ function GET_all_pages(req_data, res) {
   api_response(res, 200, JSON.stringify(all_pages));
 }
 
-function api_POST_routes(url, req, res) {
-  let req_data = '';
-  req.on('data', chunk => {
-    req_data += chunk;
-  })
-  req.on('end', function() {
-    //  Parse the data to JSON.
-    try {
-      req_data = JSON.parse(req_data);
-    } catch (e) {
-      return api_response(res, 400, `Improper data in your request.`);
-    }
-
-    let api_map = {
-      '/api/register': POST_register,
-      '/api/login': POST_login,
-      '/api/logout': POST_logout,
-      '/api/update-user': POST_update_user,
-      '/api/update-password': POST_update_password,
-      '/api/delete-user': POST_delete_user,
-      '/api/check-invite-code': POST_check_invite_code,
-      '/api/create-page': POST_create_page,
-      '/api/update-page': POST_update_page,
-      '/api/delete-page': POST_delete_page
-    }
-    
-    //  Call the API route function, if it exists.
-    if (typeof api_map[url] == 'function') {
-      api_map[url](req_data, res);
-    } else {
-      api_response(res, 404, `The POST API route ${url} does not exist.`);
-    }
-  })
+GET_routes['/api/all-files'] = function(req_data, res) {
+  let all_files = fs.readFileSync(__dirname + '/database/table_rows/files.json', 'utf8');
+  all_files = JSON.parse(all_files);
+  for (let i = 0; i < all_files.length; i++) {
+    let creator_id = parseInt(all_files[i].created_by);
+    all_files[i].created_by = DataBase.table('users').find({id: creator_id})[0].username;
+  }
+  api_response(res, 200, JSON.stringify(all_files));
 }
 
-function POST_register(new_user, res) {
+POST_routes['/api/register'] = function(new_user, res) {
   new_user.salt = crypto.randomBytes(16).toString('hex');
   new_user.password = crypto.pbkdf2Sync(new_user.password, new_user.salt, 1000, 64, `sha512`).toString(`hex`);
   //  Add the user to the db.
@@ -249,7 +265,7 @@ function POST_register(new_user, res) {
   api_response(res, 200, JSON.stringify(response));
 }
 
-function POST_login(login_info, res) {
+POST_routes['/api/login'] = function(login_info, res) {
   let user_data = DataBase.table('users').find({ username: login_info.username });
   let response = {
     error: false,
@@ -280,17 +296,17 @@ function POST_login(login_info, res) {
   api_response(res, 200, JSON.stringify(response));
 }
 
-function POST_logout(session_id, res) {
-  let success_msg = DataBase.table('sessions').delete(session_id);
+POST_routes['/api/logout'] = function(req_data, res) {
+  let success_msg = DataBase.table('sessions').delete(req_data.body);
   api_response(res, 200, success_msg);
 }
 
-function POST_update_user(user_update, res) {
+POST_routes['/api/update-user'] = function(user_update, res) {
   let response = DataBase.table('users').update(user_update.id, user_update);
   api_response(res, 200, JSON.stringify(response));
 }
 
-function POST_update_password(password_update, res) {
+POST_routes['/api/update-password'] = function(password_update, res) {
   let user_data = DataBase.table('users').find({ id: password_update.id });
   let response = {
     error: false,
@@ -321,7 +337,7 @@ function POST_update_password(password_update, res) {
   api_response(res, 200, JSON.stringify(response));
 }
 
-function POST_delete_user(user_info, res) {
+POST_routes['/api/delete-user'] = function(user_info, res) {
   let user_data = DataBase.table('users').find({ id: user_info.id });
   let response = {
     error: false,
@@ -344,7 +360,7 @@ function POST_delete_user(user_info, res) {
   api_response(res, 200, JSON.stringify(response));
 }
 
-function POST_check_invite_code(data, res) {
+POST_routes['/api/check-invite-code'] = function(data, res) {
   if (data.invite_code == 'secret123') {
     api_response(res, 200, JSON.stringify({error: false}));
   } else {
@@ -352,18 +368,28 @@ function POST_check_invite_code(data, res) {
   }
 }
 
-function POST_create_page(new_page_data, res) {
+POST_routes['/api/create-page'] = function(new_page_data, res) {
   let response = DataBase.table('pages').insert(new_page_data);
   api_response(res, 200, JSON.stringify(response));
 }
 
-function POST_update_page(page_update, res) {  
-  let response = DataBase.table('pages').update(page_update.id, page_update);
+POST_routes['/api/update-page'] = function(page_update, res) {
+  let response = { error: false };
+  let page_data = DataBase.table('pages').find({ id: page_update.id });
+  let session_data = DataBase.table('sessions').find({ id: page_update.session_id });
+  if (page_data[0].created_by != session_data[0].user_id) {
+    response.error = true;
+    response.msg = `You don't have permission to update this page.`;
+  }
+  if (!response.error) {
+    response = DataBase.table('pages').update(page_update.id, page_update);
+  }
   api_response(res, 200, JSON.stringify(response));
 }
 
-function POST_delete_page(request_info, res) {
+POST_routes['/api/delete-page'] = function(request_info, res) {
   let page_data = DataBase.table('pages').find({ id: request_info.id });
+  let session_data = DataBase.table('sessions').find({ id: request_info.session_id });
   let response = {
     error: false,
     msg: '',
@@ -371,11 +397,68 @@ function POST_delete_page(request_info, res) {
   if (page_data.length < 1) {
     response.error = true;
     response.msg = 'No page found.';
+  } else if  (page_data[0].created_by != session_data[0].user_id) {
+    response.error = true;
+    response.msg = `You don't have permission to delete this page.`;
   } else {
     response.msg = DataBase.table('pages').delete(request_info.id);
   }
   return api_response(res, 200, JSON.stringify(response));
 }
+
+POST_routes['/api/upload-file'] = function(req_data, res) {
+  req_data._params.name = req_data._params.name.replace('%2E', '.');
+
+  let file_data = DataBase.table('files').find({ name: req_data._params.name });
+  let response = {
+    error: false,
+    msg: '',
+  }
+  if (file_data.length != 0) {
+    response.error = true;
+    response.msg = `The file name ${req_data._params.name} already exists.`;
+    return api_response(res, 400, JSON.stringify(response));
+  }
+
+  try {
+    fs.writeFileSync(__dirname + '/../assets/uploads/' + req_data._params.name, req_data.body);
+  } catch (err) {
+    return api_response(res, 400, JSON.stringify(err));
+  }
+  let feedback = DataBase.table('files').insert({
+    name: req_data._params.name,
+    description: req_data._params.description.replace(/%20/g, ' '),
+    date_created: new Date().toString(),
+    created_by: req_data._params.created_by,
+    is_public: req_data._params.is_public
+  })
+  if (feedback.error) {
+    return feedback;
+  }
+  return api_response(res, 200, JSON.stringify({error: false, msg: 'File uploaded successfully!'}));
+}
+
+POST_routes['/api/delete-file'] = function(request_info, res) {
+  let file_data = DataBase.table('files').find({ id: request_info._params.id });
+  let session_data = DataBase.table('sessions').find({ id: request_info._params.session_id });
+  let response = {
+    error: false,
+    msg: '',
+  }
+  if (file_data.length < 1) {
+    response.error = true;
+    response.msg = 'No file found.';
+  } else if  (file_data[0].created_by != session_data[0].user_id) {
+    response.error = true;
+    response.msg = `You don't have permission to delete this file.`;
+  } else {
+    fs.unlinkSync(__dirname + '/../assets/uploads/' + file_data[0].name);
+    response.msg = DataBase.table('files').delete(request_info._params.id);
+  }
+  return api_response(res, 200, JSON.stringify(response));
+}
+
+
 
 ////  SECTION 4: Boot.
 

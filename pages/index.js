@@ -31,8 +31,9 @@ function render_user_buttons() {
   } else {
     buttonText = _current_user.display_name;
     menuHTML += `<a href="/profile">Your profile</a>`;
-    menuHTML += `<a href="/create-page">New page</a>`;
-    menuHTML += `<a href="/all-pages">All pages</a>`;
+    menuHTML += `<a href="/new-page">New page</a>`;
+    menuHTML += `<a href="/pages">All pages</a>`;
+    menuHTML += `<a href="/files">All files</a>`;
     menuHTML += `<button onclick="logout()">Log out</button>`;
   }
   
@@ -57,15 +58,16 @@ function boot() {
     http.onreadystatechange = (e) => {
       if (http.readyState == 4 && http.status == 200) {
         _current_user = JSON.parse(http.responseText);
-        current_user_loaded();
       } else if (http.readyState == 4 && http.status == 404) {
         console.log('No session found.');
         localStorage.removeItem('session_id');
       }
+      current_user_loaded();
       render_user_buttons();
     }
   } else {
     render_user_buttons();
+    current_user_loaded();
   }
   
   //  Redirect to home if...
