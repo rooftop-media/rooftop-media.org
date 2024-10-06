@@ -1,6 +1,6 @@
 {
-  "name": "Pages",
-  "snakecase": "pages",
+  "name": "Components",
+  "snakecase": "components",
   "max_id": 0,
   "columns": [
     {
@@ -9,11 +9,11 @@
       "unique": true
     },
     {
-      "name": "Page Title",
+      "name": "Component Title",
       "snakecase": "title"
     },
     {
-      "name": "Page Route",
+      "name": "Component Route",
       "snakecase": "route",
       "unique": true
     },

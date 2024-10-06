@@ -8,6 +8,7 @@ var crypto = require('crypto'); // encrypt user passwords
 
 //  Importing our custom libraries
 const DataBase = require('./database/database.js');
+const SSR = require('./utils/ssr.js');
 
 ////  SECTION 2: Request response.
 
@@ -32,16 +33,18 @@ var mimeTypes = {
 
 //  Mapping URLs to pages
 var pageURLs = {
-  '/': '/pages/misc/landing.html',
-  '/landing': '/pages/misc/landing.html',
-  '/register': '/pages/misc/register.html',
-  '/login': '/pages/misc/login.html',
-  '/profile': '/pages/misc/profile.html',
-  '/new-page': '/pages/cms/new-page.html',
-  '/pages': '/pages/cms/pages.html',
-  '/markup-rules': '/pages/cms/markup-rules.html',
-  '/upload-file': '/pages/cms/upload-file.html',
-  '/files': '/pages/cms/files.html'
+  '/':               '/pages/misc/landing.html',
+  '/landing':        '/pages/misc/landing.html',
+  '/register':       '/pages/misc/register.html',
+  '/login':          '/pages/misc/login.html',
+  '/profile':        '/pages/misc/profile.html',
+  '/new-page':       '/pages/cms/new-page.html',
+  '/pages':          '/pages/cms/pages.html',
+  '/markup-rules':   '/pages/cms/markup-rules.html',
+  '/upload-file':    '/pages/cms/upload-file.html',
+  '/files':          '/pages/cms/files.html',
+  '/new-component':  '/pages/cms/components/new-component.html',
+  '/components':     '/pages/cms/components/components.html'
 }
 var pageURLkeys = Object.keys(pageURLs);
 
@@ -75,6 +78,8 @@ function respond_with_a_page(res, url) {
     }
   } else if (url.substring(0, 6) == '/edit/') {
     page_content = fs.readFileSync(__dirname + '/../pages/cms/edit-page.html');
+  } else if (url.substring(0, 16) == '/edit-component/') {
+    page_content = fs.readFileSync(__dirname + '/../pages/cms/components/edit-component.html');
   } else {                          //  If it's a dynamic page route....
     let page_data = DataBase.table('pages').find({ route: url.slice(1) });  //  Removing the "/" from the route
     if (page_data.length < 1) {
@@ -215,7 +220,28 @@ GET_routes['/api/page'] = function(req_data, res) {
   } else {
     response.error = true;
     response.msg = `You don't have permission to view this page.`;
-  } 
+  }
+  api_response(res, 200, JSON.stringify(response));
+}
+
+GET_routes['/api/SSR-page'] = function(req_data, res) {
+  let response = { error: false };
+  let page_data = DataBase.table('pages').find({ route: req_data.route });
+  let session_data = DataBase.table('sessions').find({ id: req_data.session_id });
+  if (page_data.length < 1) {
+    response.error = true;
+    response.msg = `The page ${req_data.route} was not found.`;
+  } else if (page_data[0].is_public || (session_data.length > 0 && page_data[0].created_by == session_data[0].user_id)) {
+    response.data =  page_data[0];
+  } else {
+    response.error = true;
+    response.msg = `You don't have permission to view this page.`;
+  }
+  //  Now we have our page, we SSR components
+  response.data.content = SSR.render_components(response.data.content);
+  
+  // console.log(response.data.content)
+  //console.log(ConvertMarkup.markup_to_tokens(response.data.content))
   api_response(res, 200, JSON.stringify(response));
 }
 
@@ -238,6 +264,32 @@ GET_routes['/api/all-files'] = function(req_data, res) {
     all_files[i].created_by = DataBase.table('users').find({id: creator_id})[0].username;
   }
   api_response(res, 200, JSON.stringify(all_files));
+}
+
+GET_routes['/api/component'] = function(req_data, res) {
+  let response = { error: false };
+  let comp_data = DataBase.table('components').find({ route: req_data.route });
+  let session_data = DataBase.table('sessions').find({ id: req_data.session_id });
+  if (comp_data.length < 1) {
+    response.error = true;
+    response.msg = `The component ${req_data.route} was not found.`;
+  } else if (comp_data[0].is_public || (session_data.length > 0 && comp_data[0].created_by == session_data[0].user_id)) {
+    response.data =  comp_data[0];
+  } else {
+    response.error = true;
+    response.msg = `You don't have permission to view this component.`;
+  }
+  api_response(res, 200, JSON.stringify(response));
+}
+
+GET_routes['/api/all-components'] = function(req_data, res) {
+  let all_components = fs.readFileSync(__dirname + '/database/table_rows/components.json', 'utf8');
+  all_components = JSON.parse(all_components);
+  for (let i = 0; i < all_components.length; i++) {
+    let creator_id = parseInt(all_components[i].created_by);
+    all_components[i].created_by = DataBase.table('users').find({id: creator_id})[0].username;
+  }
+  api_response(res, 200, JSON.stringify(all_components));
 }
 
 POST_routes['/api/register'] = function(new_user, res) {
@@ -454,6 +506,44 @@ POST_routes['/api/delete-file'] = function(request_info, res) {
   } else {
     fs.unlinkSync(__dirname + '/../assets/uploads/' + file_data[0].name);
     response.msg = DataBase.table('files').delete(request_info._params.id);
+  }
+  return api_response(res, 200, JSON.stringify(response));
+}
+
+POST_routes['/api/create-component'] = function(new_component_data, res) {
+  let response = DataBase.table('components').insert(new_component_data);
+  api_response(res, 200, JSON.stringify(response));
+}
+
+POST_routes['/api/update-component'] = function(component_update, res) {
+  let response = { error: false };
+  let component_data = DataBase.table('components').find({ id: component_update.id });
+  let session_data = DataBase.table('sessions').find({ id: component_update.session_id });
+  if (component_data[0].created_by != session_data[0].user_id) {
+    response.error = true;
+    response.msg = `You don't have permission to update this component.`;
+  }
+  if (!response.error) {
+    response = DataBase.table('components').update(component_update.id, component_update);
+  }
+  api_response(res, 200, JSON.stringify(response));
+}
+
+POST_routes['/api/delete-component'] = function(request_info, res) {
+  let component_data = DataBase.table('components').find({ id: request_info.id });
+  let session_data = DataBase.table('sessions').find({ id: request_info.session_id });
+  let response = {
+    error: false,
+    msg: '',
+  }
+  if (component_data.length < 1) {
+    response.error = true;
+    response.msg = 'No component found.';
+  } else if  (component_data[0].created_by != session_data[0].user_id) {
+    response.error = true;
+    response.msg = `You don't have permission to delete this component.`;
+  } else {
+    response.msg = DataBase.table('components').delete(request_info.id);
   }
   return api_response(res, 200, JSON.stringify(response));
 }

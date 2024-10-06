@@ -1,7 +1,7 @@
 {
   "name": "Files",
   "snakecase": "files",
-  "max_id": 10,
+  "max_id": 0,
   "columns": [
     {
       "name": "Id",
